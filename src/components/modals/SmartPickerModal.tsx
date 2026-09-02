@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Dices, Play, Sparkles } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { Game } from '../../types/game';
 import { useGame } from '../../context/GameContext';
 import { GameCoverImage } from '../common/GameCoverImage';
@@ -11,11 +12,31 @@ export const SmartPickerModal: React.FC = () => {
     games,
     quickChangeStatus,
     setSelectedGame,
+    settings,
   } = useGame();
 
+  const isDeathNote = settings.theme === 'death-note';
   const [pickedGame, setPickedGame] = useState<Game | null>(null);
 
   const backlogGames = games.filter((g) => g.status === 'backlog');
+
+  const triggerPickerConfetti = () => {
+    if (isDeathNote) {
+      confetti({
+        particleCount: 45,
+        spread: 70,
+        origin: { y: 0.65 },
+        colors: ['#e50914', '#991b1b', '#111115', '#f5f2eb'],
+      });
+    } else {
+      confetti({
+        particleCount: 45,
+        spread: 70,
+        origin: { y: 0.65 },
+        colors: ['#00f2fe', '#9d4edd', '#10b981', '#f59e0b'],
+      });
+    }
+  };
 
   const handleClose = () => {
     setIsPickerModalOpen(false);
@@ -26,6 +47,7 @@ export const SmartPickerModal: React.FC = () => {
     if (backlogGames.length === 0) return;
     const randomChoice = backlogGames[Math.floor(Math.random() * backlogGames.length)];
     setPickedGame(randomChoice);
+    triggerPickerConfetti();
   };
 
   useEffect(() => {
@@ -55,7 +77,11 @@ export const SmartPickerModal: React.FC = () => {
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn"
     >
-      <div className="relative w-full max-w-md rounded-3xl bg-gamer-900 border border-slate-700/80 shadow-2xl overflow-hidden my-6 flex flex-col p-6 text-center animate-scaleIn">
+      <div className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-6 flex flex-col p-6 text-center animate-scaleIn border ${
+        isDeathNote 
+          ? 'bg-death-900 border-death-crimson/40 shadow-[0_0_50px_rgba(229,9,20,0.25)]' 
+          : 'bg-gamer-900 border-slate-700/80'
+      }`}>
         
         {/* Close Button */}
         <button
@@ -66,25 +92,39 @@ export const SmartPickerModal: React.FC = () => {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 mx-auto mb-3 shadow-glow-amber">
-          <Dices className="w-6 h-6" />
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 ${
+          isDeathNote
+            ? 'bg-death-crimson/20 border border-death-crimson/50 text-death-crimson shadow-glow-crimson'
+            : 'bg-amber-500/20 border border-amber-500/40 text-amber-300 shadow-glow-amber'
+        }`}>
+          {isDeathNote ? (
+            <span className="text-2xl leading-none">🍎</span>
+          ) : (
+            <Dices className="w-6 h-6" />
+          )}
         </div>
 
-        <h3 className="text-lg font-black text-white mb-1">
-          O que eu vou jogar?
+        <h3 className={`text-lg font-black text-white mb-1 ${isDeathNote ? 'font-deathnote text-2xl tracking-wider' : ''}`}>
+          {isDeathNote ? 'Qual será o próximo jogo do caderno?' : 'O que eu vou jogar?'}
         </h3>
-        <p className="text-xs text-slate-400 mb-5">
-          Sorteado aleatoriamente dos seus jogos em <strong>Quero Jogar</strong>
+        <p className={`text-xs mb-5 ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
+          {isDeathNote 
+            ? 'Escolhido aleatoriamente das páginas do seu Backlog' 
+            : 'Sorteado aleatoriamente dos seus jogos em Quero Jogar'}
         </p>
 
         {pickedGame ? (
           <div className="space-y-4">
-            <div className="w-36 mx-auto rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700 bg-gamer-950">
+            <div className={`w-36 mx-auto rounded-2xl overflow-hidden shadow-2xl border-2 bg-gamer-950 ${
+              isDeathNote ? 'border-death-crimson/50 shadow-glow-crimson' : 'border-slate-700'
+            }`}>
               <GameCoverImage src={pickedGame.coverUrl} alt={pickedGame.title} />
             </div>
 
             <div>
-              <span className="text-xs font-bold text-neon-cyan block mb-1">
+              <span className={`text-xs font-bold block mb-1 ${
+                isDeathNote ? 'text-death-crimson' : 'text-neon-cyan'
+              }`}>
                 {pickedGame.platform}
               </span>
               <h4 className="text-xl font-black text-white">
@@ -101,19 +141,27 @@ export const SmartPickerModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleSpin}
-                className="w-full sm:w-1/2 py-2.5 px-3 rounded-xl bg-gamer-800 hover:bg-gamer-750 text-slate-300 hover:text-white font-bold text-xs border border-slate-700 transition-all flex items-center justify-center gap-1.5"
+                className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1.5 ${
+                  isDeathNote
+                    ? 'bg-death-850 hover:bg-death-800 text-death-parchment border-death-crimson/30 hover:border-death-crimson/60'
+                    : 'bg-gamer-800 hover:bg-gamer-750 text-slate-300 hover:text-white border-slate-700'
+                }`}
               >
-                <Dices className="w-4 h-4" />
-                Sortear Outro
+                {isDeathNote ? <span className="text-sm">🎲</span> : <Dices className="w-4 h-4" />}
+                {isDeathNote ? 'Sortear Outro' : 'Sortear Outro'}
               </button>
 
               <button
                 type="button"
                 onClick={() => handleStartPlaying(pickedGame)}
-                className="w-full sm:w-1/2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 text-gamer-950 font-black text-xs shadow-glow-emerald hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+                  isDeathNote
+                    ? 'bg-gradient-to-r from-death-crimson to-red-800 text-white shadow-glow-crimson hover:brightness-110'
+                    : 'bg-gradient-to-r from-emerald-400 to-teal-500 text-gamer-950 shadow-glow-emerald hover:brightness-110'
+                }`}
               >
                 <Play className="w-4 h-4 fill-current" />
-                Começar a Jogar
+                {isDeathNote ? 'Iniciar no Caderno' : 'Começar a Jogar'}
               </button>
             </div>
           </div>

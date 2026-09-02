@@ -83,11 +83,12 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Sync theme class
   useEffect(() => {
     const root = document.documentElement;
+    root.classList.remove('light', 'dark', 'death-note');
     if (settings.theme === 'light') {
-      root.classList.remove('dark');
       root.classList.add('light');
+    } else if (settings.theme === 'death-note') {
+      root.classList.add('dark', 'death-note');
     } else {
-      root.classList.remove('light');
       root.classList.add('dark');
     }
   }, [settings.theme]);

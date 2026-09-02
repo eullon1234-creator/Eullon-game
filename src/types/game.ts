@@ -23,8 +23,10 @@ export type NavigationTab =
   | 'favorites'
   | 'settings';
 
+export type ThemeMode = 'dark' | 'light' | 'death-note';
+
 export interface AppSettings {
-  theme: 'dark' | 'light';
+  theme: ThemeMode;
   viewMode: 'grid' | 'list';
 }
 

@@ -126,22 +126,38 @@ export const SettingsView: React.FC = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Tema */}
-          <div className="space-y-2">
+          <div className="space-y-2 sm:col-span-2">
             <label className="text-xs font-bold text-slate-300 block">
               Tema Visual
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() => updateSettings({ theme: 'dark' })}
                 className={`py-3 px-4 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
                   settings.theme === 'dark'
-                    ? 'bg-neon-cyan/20 border-neon-cyan text-white shadow-sm'
+                    ? 'bg-neon-cyan/20 border-neon-cyan text-white shadow-sm ring-1 ring-neon-cyan/50'
                     : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
                 <Moon className="w-4 h-4 text-neon-cyan" />
-                Escuro (Gamer)
+                <span>Escuro (Gamer)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateSettings({ theme: 'death-note' })}
+                className={`py-3 px-4 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
+                  settings.theme === 'death-note'
+                    ? 'bg-death-crimson/25 border-death-crimson text-white shadow-glow-crimson ring-1 ring-death-crimson'
+                    : 'bg-death-900 border-red-950/80 text-slate-400 hover:text-red-300 hover:border-death-crimson/40'
+                }`}
+              >
+                <span className="text-base leading-none">🍎</span>
+                <span className="font-deathnote text-sm tracking-wide">Death Note</span>
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-death-crimson/30 text-death-crimson uppercase font-mono tracking-tighter">
+                  Shinigami
+                </span>
               </button>
 
               <button
@@ -149,14 +165,19 @@ export const SettingsView: React.FC = () => {
                 onClick={() => updateSettings({ theme: 'light' })}
                 className={`py-3 px-4 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all ${
                   settings.theme === 'light'
-                    ? 'bg-neon-cyan/20 border-neon-cyan text-white shadow-sm'
+                    ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-sm ring-1 ring-amber-400/50'
                     : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-white'
                 }`}
               >
                 <Sun className="w-4 h-4 text-amber-400" />
-                Claro
+                <span>Claro</span>
               </button>
             </div>
+            {settings.theme === 'death-note' && (
+              <p className="text-[11px] text-red-400/90 font-deathnote-sub italic pl-1 animate-fadeIn">
+                "O humano que registrar seus jogos neste caderno viverá para finalizá-los." — Regra do Shinigami
+              </p>
+            )}
           </div>
 
           {/* Modo de Visualização Padrão */}

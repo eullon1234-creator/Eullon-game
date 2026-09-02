@@ -14,7 +14,8 @@ import { SmartPickerModal } from './components/modals/SmartPickerModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 
 const AppContent: React.FC = () => {
-  const { activeTab } = useGame();
+  const { activeTab, settings } = useGame();
+  const isDeathNote = settings.theme === 'death-note';
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -40,7 +41,11 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gamer-950 text-slate-100 flex flex-col font-sans gamer-grid-bg selection:bg-neon-cyan selection:text-gamer-950">
+    <div className={`min-h-screen flex flex-col font-sans gamer-grid-bg transition-colors duration-300 ${
+      isDeathNote 
+        ? 'bg-death-950 text-death-parchment selection:bg-death-crimson selection:text-white' 
+        : 'bg-gamer-950 text-slate-100 selection:bg-neon-cyan selection:text-gamer-950'
+    }`}>
       <Navbar />
 
       <div className="flex-1 flex max-w-7xl w-full mx-auto">

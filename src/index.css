@@ -21,6 +21,16 @@
     --text-muted: #64748b;
   }
 
+  html.death-note {
+    --bg-primary: #070608;
+    --bg-card: #0e0c10;
+    --bg-hover: #17131a;
+    --border-color: #2e1d24;
+    --text-main: #f5f2eb;
+    --text-muted: #a39b9f;
+    --accent-crimson: #e50914;
+  }
+
   body {
     background-color: var(--bg-primary);
     color: var(--text-main);
@@ -116,4 +126,57 @@
   background-image: 
     radial-gradient(circle at 50% 0%, rgba(58, 134, 255, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 100% 50%, rgba(157, 78, 221, 0.04) 0%, transparent 40%);
+}
+
+.death-note .gamer-grid-bg {
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(229, 9, 20, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 100% 50%, rgba(153, 27, 27, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 0% 100%, rgba(88, 14, 20, 0.15) 0%, transparent 50%),
+    linear-gradient(to bottom, rgba(7, 6, 8, 0.4), rgba(7, 6, 8, 0.85));
+}
+
+/* Death Note Theme Overrides */
+.death-note ::-webkit-scrollbar-track {
+  background: #070608;
+}
+
+.death-note ::-webkit-scrollbar-thumb {
+  background: #2e1419;
+  border: 1px solid rgba(229, 9, 20, 0.2);
+}
+
+.death-note ::-webkit-scrollbar-thumb:hover {
+  background: #e50914;
+  box-shadow: 0 0 8px rgba(229, 9, 20, 0.6);
+}
+
+.death-note .glass-panel {
+  background: rgba(14, 12, 16, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 9, 20, 0.18);
+}
+
+.death-note .glass-modal {
+  background: rgba(12, 10, 15, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(229, 9, 20, 0.25);
+  box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.15);
+}
+
+.glow-border-crimson:hover {
+  box-shadow: 0 0 22px -2px rgba(229, 9, 20, 0.5);
+  border-color: rgba(229, 9, 20, 0.7);
+}
+
+/* Death Note text and card highlights */
+.death-note .font-deathnote-title {
+  font-family: 'Pirata One', 'Cinzel Decorative', cursive;
+  letter-spacing: 0.08em;
+}
+
+.death-note .font-deathnote-sub {
+  font-family: 'Cinzel', serif;
 }
