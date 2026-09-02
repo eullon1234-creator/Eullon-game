@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #07090e;
+    --bg-card: #0b0f19;
+    --bg-hover: #161f33;
+    --border-color: #1d2842;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+  }
+
+  html.light {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5f9;
+    --border-color: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-main);
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Custom Scrollbar for gaming feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07090e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1d2842;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #384b73;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  background: rgba(11, 15, 25, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.glass-modal {
+  background: rgba(11, 15, 25, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.light .glass-modal {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+/* Glow gradient borders and highlights */
+.glow-border-cyan:hover {
+  box-shadow: 0 0 20px -3px rgba(0, 242, 254, 0.35);
+  border-color: rgba(0, 242, 254, 0.6);
+}
+
+.glow-border-purple:hover {
+  box-shadow: 0 0 20px -3px rgba(157, 78, 221, 0.4);
+  border-color: rgba(157, 78, 221, 0.6);
+}
+
+.glow-border-emerald:hover {
+  box-shadow: 0 0 20px -3px rgba(16, 185, 129, 0.35);
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+/* Poster Aspect Ratio (3:4 ratio for standard game box art) */
+.aspect-game-cover {
+  aspect-ratio: 3 / 4;
+}
+
+/* Subtle animated background gradient grid */
+.gamer-grid-bg {
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(58, 134, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 100% 50%, rgba(157, 78, 221, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 0% 100%, rgba(0, 242, 254, 0.05) 0%, transparent 40%);
+}
+
+.light .gamer-grid-bg {
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(58, 134, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 100% 50%, rgba(157, 78, 221, 0.04) 0%, transparent 40%);
+}
