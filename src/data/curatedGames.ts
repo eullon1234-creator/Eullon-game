@@ -1,5 +1,6 @@
 import { TimeToBeat } from '../types/game';
 import { GBA_GAMES } from './gbaGames';
+import { STEAM_GAMEPASS_GAMES } from './steamGamePassGames';
 
 export interface CuratedGame {
   id: string;
@@ -22,6 +23,8 @@ export interface GameCategory {
 
 export const CATALOG_CATEGORIES: GameCategory[] = [
   { id: 'all', name: 'Todos os Destaques', icon: '🌟', description: 'Seleção das maiores obras-primas de todos os tempos' },
+  { id: 'steam_top', name: 'Steam & Blockbusters', icon: '🔥', description: 'Grandes sucessos mundiais, fenômenos e recordistas da Steam e PC Gaming' },
+  { id: 'gamepass', name: 'Xbox & Game Pass', icon: '💚', description: 'Grandes franquias e sucessos consagrados do ecossistema Xbox e Game Pass' },
   { id: 'gba', name: 'Game Boy Advance (GBA)', icon: '👾', description: 'Os maiores clássicos inesquecíveis da era de ouro 32-bits portátil da Nintendo' },
   { id: 'ps2', name: 'Nostalgia PS2', icon: '🎮', description: 'A era de ouro do PlayStation 2: os maiores clássicos que marcaram gerações' },
   { id: 'pokemon', name: 'Universo Pokémon', icon: '⚡', description: 'Todas as gerações de treinadores de Kanto a Paldea' },
@@ -5959,4 +5962,5 @@ export const CURATED_GAMES: CuratedGame[] = [
     timeToBeat: {"main":37,"extra":58,"completionist":82},
   },
   ...GBA_GAMES,
+  ...STEAM_GAMEPASS_GAMES,
 ];
