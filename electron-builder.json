@@ -3,7 +3,7 @@
   "appId": "com.eullon.gametracker",
   "productName": "Game Tracker Pro",
   "directories": {
-    "output": "release"
+    "output": "C:/Users/EULLON/AppData/Local/Temp/game-tracker-release"
   },
   "files": [
     "dist/**/*",

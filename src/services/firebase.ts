@@ -56,12 +56,19 @@ export function subscribeToGames(
 }
 
 /**
+ * Remove propriedades com valor undefined para compatibilidade com o Firestore.
+ */
+function cleanFirestoreData(data: any): any {
+  return JSON.parse(JSON.stringify(data));
+}
+
+/**
  * Salva ou atualiza um jogo no Firestore.
  */
 export async function saveGameToFirestore(game: Game): Promise<void> {
   try {
     const docRef = doc(db, COLLECTION_NAME, game.id);
-    await setDoc(docRef, game, { merge: true });
+    await setDoc(docRef, cleanFirestoreData(game), { merge: true });
   } catch (err) {
     console.error('Erro ao salvar no Firestore:', err);
     throw err;
@@ -89,7 +96,7 @@ export async function batchUploadGames(games: Game[]): Promise<void> {
     const batch = writeBatch(db);
     games.forEach((game) => {
       const docRef = doc(db, COLLECTION_NAME, game.id);
-      batch.set(docRef, game, { merge: true });
+      batch.set(docRef, cleanFirestoreData(game), { merge: true });
     });
     await batch.commit();
   } catch (err) {
