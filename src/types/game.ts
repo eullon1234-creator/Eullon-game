@@ -40,6 +40,9 @@ export interface AppSettings {
   rawgApiKey?: string;
   groqApiKey?: string;
   groqModel?: string;
+  jarvisVoiceURI?: string;
+  jarvisVoiceRate?: number;
+  jarvisVoicePitch?: number;
 }
 
 export type SortOption = 

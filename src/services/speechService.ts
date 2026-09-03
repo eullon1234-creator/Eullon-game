@@ -1,6 +1,5 @@
 // src/services/speechService.ts
 
-// Declaração de tipos para navegadores que suportam SpeechRecognition
 declare global {
   interface Window {
     SpeechRecognition?: any;
@@ -9,7 +8,7 @@ declare global {
 }
 
 /**
- * Remove formatação Markdown (negrito, links, asteriscos, código) para leitura limpa por voz.
+ * Remove formatação Markdown e blocos de comandos para leitura limpa por voz.
  */
 function cleanTextForSpeech(text: string): string {
   return text
@@ -20,8 +19,32 @@ function cleanTextForSpeech(text: string): string {
     .replace(/#+\s/g, '') // remove headers
     .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // remove links
     .replace(/[-*]\s/g, '') // remove marcadores de lista
-    .replace(/[>_~]/g, '')
+    .replace(/[>_~•›]/g, '')
     .trim();
+}
+
+/**
+ * Divide textos longos em sentenças naturais para evitar o bug de corte de áudio do Chrome/Edge.
+ */
+function splitIntoSentences(text: string): string[] {
+  const parts = text.match(/[^.!?\n]+[.!?\n]*/g) || [text];
+  return parts
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+}
+
+export interface VoiceOption {
+  voice: SpeechSynthesisVoice;
+  name: string;
+  lang: string;
+  isNeural: boolean;
+  score: number;
+}
+
+export interface SpeechOptions {
+  voiceURI?: string;
+  rate?: number;
+  pitch?: number;
 }
 
 export interface SpeechRecognitionHandlers {
@@ -34,6 +57,8 @@ export interface SpeechRecognitionHandlers {
 export const speechService = {
   recognitionInstance: null as any,
   isListening: false,
+  cachedVoices: [] as SpeechSynthesisVoice[],
+  voicesLoaded: false,
 
   /**
    * Verifica se o navegador suporta síntese de voz.
@@ -50,9 +75,106 @@ export const speechService = {
   },
 
   /**
-   * Faz o J.A.R.V.I.S. falar um texto em voz alta.
+   * Inicializa o ouvinte de vozes do navegador.
    */
-  speak(text: string, onStart?: () => void, onEnd?: () => void): void {
+  initVoices(): void {
+    if (!this.hasSpeechSynthesis()) return;
+
+    const load = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        this.cachedVoices = voices;
+        this.voicesLoaded = true;
+      }
+    };
+
+    load();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = load;
+    }
+  },
+
+  /**
+   * Retorna todas as vozes em Português ordenadas por qualidade (Neurais / Naturais primeiro).
+   */
+  getAvailableVoices(): VoiceOption[] {
+    if (!this.hasSpeechSynthesis()) return [];
+
+    if (this.cachedVoices.length === 0) {
+      this.cachedVoices = window.speechSynthesis.getVoices();
+    }
+
+    const ptVoices = this.cachedVoices.filter((v) => 
+      v.lang.toLowerCase().includes('pt') || v.lang.toLowerCase().includes('br')
+    );
+
+    const scored: VoiceOption[] = ptVoices.map((v) => {
+      const name = v.name.toLowerCase();
+      let score = 0;
+      let isNeural = false;
+
+      // Pontuações para vozes neurais de ponta
+      if (name.includes('natural') || name.includes('neural')) {
+        score += 150;
+        isNeural = true;
+      }
+      if (name.includes('antonio')) {
+        score += 100; // Microsoft Antonio (voz masculina brasileira clássica de narrador)
+        isNeural = true;
+      }
+      if (name.includes('francisca')) {
+        score += 90; // Microsoft Francisca (voz feminina neural brasileira)
+        isNeural = true;
+      }
+      if (name.includes('google')) {
+        score += 80; // Google português do Brasil
+        isNeural = true;
+      }
+      if (name.includes('online')) {
+        score += 40;
+      }
+      if (v.lang.toLowerCase().includes('pt-br') || v.lang.toLowerCase().includes('pt_br')) {
+        score += 30;
+      }
+
+      return {
+        voice: v,
+        name: v.name,
+        lang: v.lang,
+        isNeural,
+        score,
+      };
+    });
+
+    // Ordena da maior pontuação para a menor
+    return scored.sort((a, b) => b.score - a.score);
+  },
+
+  /**
+   * Encontra a melhor voz disponível (ou a voz salva pelo usuário).
+   */
+  getBestVoice(savedVoiceURI?: string): SpeechSynthesisVoice | null {
+    const available = this.getAvailableVoices();
+    if (available.length === 0) return null;
+
+    if (savedVoiceURI) {
+      const matched = available.find((item) => item.voice.voiceURI === savedVoiceURI);
+      if (matched) return matched.voice;
+    }
+
+    // Retorna a melhor voz ranqueada (com maior probabilidade de ser Neural/Natural)
+    return available[0]?.voice || null;
+  },
+
+  /**
+   * Faz o J.A.R.V.I.S. falar com dicção humana e controle de frases em sequência.
+   */
+  speak(
+    text: string, 
+    onStart?: () => void, 
+    onEnd?: () => void,
+    options?: SpeechOptions
+  ): void {
     if (!this.hasSpeechSynthesis()) return;
 
     this.stopSpeaking();
@@ -60,28 +182,63 @@ export const speechService = {
     const cleaned = cleanTextForSpeech(text);
     if (!cleaned) return;
 
-    const utterance = new SpeechSynthesisUtterance(cleaned);
-    utterance.lang = 'pt-BR';
-    utterance.rate = 1.05; // ritmo fluente e articulado
-    utterance.pitch = 0.95; // tom ligeiramente grave e elegante
+    const sentences = splitIntoSentences(cleaned);
+    if (sentences.length === 0) return;
 
-    // Busca vozes disponíveis para priorizar voz em português de alta qualidade
-    const voices = window.speechSynthesis.getVoices();
-    const ptVoice = voices.find((v) => v.lang.includes('pt-BR') || v.lang.includes('pt_BR') || v.lang.includes('pt'));
-    if (ptVoice) {
-      utterance.voice = ptVoice;
-    }
+    const targetVoice = this.getBestVoice(options?.voiceURI);
+    const rate = options?.rate !== undefined ? options.rate : 1.02; // cadência natural
+    const pitch = options?.pitch !== undefined ? options.pitch : 0.95; // tom refinado J.A.R.V.I.S.
 
-    if (onStart) utterance.onstart = onStart;
-    utterance.onend = () => {
-      if (onEnd) onEnd();
+    let currentIndex = 0;
+    let hasStarted = false;
+
+    const speakNextSentence = () => {
+      if (currentIndex >= sentences.length) {
+        if (onEnd) onEnd();
+        return;
+      }
+
+      const sentenceText = sentences[currentIndex];
+      currentIndex++;
+
+      const utterance = new SpeechSynthesisUtterance(sentenceText);
+      utterance.lang = targetVoice?.lang || 'pt-BR';
+      if (targetVoice) {
+        utterance.voice = targetVoice;
+      }
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+
+      utterance.onstart = () => {
+        if (!hasStarted) {
+          hasStarted = true;
+          if (onStart) onStart();
+        }
+      };
+
+      utterance.onend = () => {
+        // Pausa sutil entre sentenças para soar como respiração humana
+        setTimeout(speakNextSentence, 40);
+      };
+
+      utterance.onerror = (e) => {
+        console.warn('Alerta na fala do J.A.R.V.I.S.:', e);
+        if (currentIndex >= sentences.length && onEnd) onEnd();
+        else speakNextSentence();
+      };
+
+      window.speechSynthesis.speak(utterance);
     };
-    utterance.onerror = (e) => {
-      console.warn('Erro na síntese de voz do JARVIS:', e);
-      if (onEnd) onEnd();
-    };
 
-    window.speechSynthesis.speak(utterance);
+    speakNextSentence();
+  },
+
+  /**
+   * Teste rápido de calibração de voz do J.A.R.V.I.S.
+   */
+  testVoice(options?: SpeechOptions, onEnd?: () => void): void {
+    const testText = 'Protocolo de voz calibrado. Sistemas operacionais em prontidão para o Senhor Eullon.';
+    this.speak(testText, undefined, onEnd, options);
   },
 
   /**
@@ -94,7 +251,7 @@ export const speechService = {
   },
 
   /**
-   * Inicia a escuta pelo microfone para comandos de voz do usuário.
+   * Inicia o microfone para comandos de voz.
    */
   startListening(handlers: SpeechRecognitionHandlers): boolean {
     if (!this.hasSpeechRecognition()) {
@@ -154,9 +311,6 @@ export const speechService = {
     }
   },
 
-  /**
-   * Para a escuta do microfone.
-   */
   stopListening(): void {
     if (this.recognitionInstance) {
       try {
@@ -167,3 +321,6 @@ export const speechService = {
     this.isListening = false;
   },
 };
+
+// Inicializa o pré-carregamento imediato
+speechService.initVoices();

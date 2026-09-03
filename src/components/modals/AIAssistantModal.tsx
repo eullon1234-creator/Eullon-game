@@ -2,12 +2,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Send, Trash2, Mic, MicOff, Volume2, VolumeX, 
-  Zap, Shield, Terminal, CheckCircle2, Sparkles, Activity
+  Zap, Shield, Terminal, CheckCircle2, Sparkles, Activity, SlidersHorizontal, Play
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useToast } from '../../context/ToastContext';
 import { groqService, ChatMessage, JarvisAction } from '../../services/groqService';
-import { speechService } from '../../services/speechService';
+import { speechService, VoiceOption } from '../../services/speechService';
 import { ArcReactor } from '../common/ArcReactor';
 import { CURATED_GAMES } from '../../data/curatedGames';
 
@@ -42,6 +42,22 @@ export const AIAssistantModal: React.FC = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [lastExecutedAction, setLastExecutedAction] = useState<string | null>(null);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
+  const [testingVoice, setTestingVoice] = useState(false);
+
+  // Carrega vozes neurais assim que o modal abre ou vozes são detectadas
+  useEffect(() => {
+    if (isAIAssistantOpen) {
+      const load = () => {
+        setAvailableVoices(speechService.getAvailableVoices());
+      };
+      load();
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = load;
+      }
+    }
+  }, [isAIAssistantOpen]);
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -179,7 +195,12 @@ export const AIAssistantModal: React.FC = () => {
         speechService.speak(
           cleanMessage,
           () => setIsSpeaking(true),
-          () => setIsSpeaking(false)
+          () => setIsSpeaking(false),
+          {
+            voiceURI: settings.jarvisVoiceURI,
+            rate: settings.jarvisVoiceRate,
+            pitch: settings.jarvisVoicePitch,
+          }
         );
       }
     } catch (err: any) {
@@ -190,7 +211,12 @@ export const AIAssistantModal: React.FC = () => {
         speechService.speak(
           errorMessage,
           () => setIsSpeaking(true),
-          () => setIsSpeaking(false)
+          () => setIsSpeaking(false),
+          {
+            voiceURI: settings.jarvisVoiceURI,
+            rate: settings.jarvisVoiceRate,
+            pitch: settings.jarvisVoicePitch,
+          }
         );
       }
     } finally {
@@ -241,8 +267,30 @@ export const AIAssistantModal: React.FC = () => {
     } else {
       setVoiceEnabled(true);
       showToast('Voz do J.A.R.V.I.S. ativada.', 'success');
-      speechService.speak('Sistemas de voz reativados, Senhor Eullon.');
+      speechService.speak(
+        'Sistemas de voz reativados, Senhor Eullon.',
+        undefined,
+        undefined,
+        {
+          voiceURI: settings.jarvisVoiceURI,
+          rate: settings.jarvisVoiceRate,
+          pitch: settings.jarvisVoicePitch,
+        }
+      );
     }
+  };
+
+  const handleTestVoice = () => {
+    if (testingVoice) return;
+    setTestingVoice(true);
+    speechService.testVoice(
+      {
+        voiceURI: settings.jarvisVoiceURI,
+        rate: settings.jarvisVoiceRate,
+        pitch: settings.jarvisVoicePitch,
+      },
+      () => setTestingVoice(false)
+    );
   };
 
   const handleClearHistory = () => {
@@ -295,6 +343,20 @@ export const AIAssistantModal: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
+            {/* Calibração de Voz Neural */}
+            <button
+              type="button"
+              onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+              title="Calibrar voz neural do J.A.R.V.I.S."
+              className={`p-2 rounded-xl border transition-all ${
+                showVoiceSettings
+                  ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
+                  : 'p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors border border-transparent'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+            </button>
+
             {/* Toggle Voz Falada */}
             <button
               type="button"
@@ -333,6 +395,126 @@ export const AIAssistantModal: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Painel Expansível de Calibração de Voz Neural */}
+        {showVoiceSettings && (
+          <div className="px-5 py-4 bg-gamer-950/98 border-b border-cyan-500/30 space-y-3.5 animate-fadeIn font-sans text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-cyan-400 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Calibração de Voz Neural do J.A.R.V.I.S.</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowVoiceSettings(false)}
+                className="text-slate-400 hover:text-white text-[11px]"
+              >
+                Concluir
+              </button>
+            </div>
+
+            {/* Seletor de Voz */}
+            <div className="space-y-1.5">
+              <label className="text-slate-300 font-semibold block text-[11px]">
+                Voz Neural Detectada no Navegador:
+              </label>
+              <select
+                value={settings.jarvisVoiceURI || ''}
+                onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-gamer-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+              >
+                {availableVoices.length === 0 ? (
+                  <option value="">Voz padrão do sistema</option>
+                ) : (
+                  availableVoices.map((item, idx) => (
+                    <option key={idx} value={item.voice.voiceURI}>
+                      {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Presets de Velocidade e Timbre */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="space-y-1">
+                <label className="text-slate-300 font-semibold block text-[11px]">
+                  Cadência / Velocidade:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: 'Ponderado', val: 0.92 },
+                    { label: 'Padrão', val: 1.02 },
+                    { label: 'Ágil', val: 1.15 },
+                  ].map((preset) => {
+                    const currentRate = settings.jarvisVoiceRate !== undefined ? settings.jarvisVoiceRate : 1.02;
+                    const isSelected = Math.abs(currentRate - preset.val) < 0.05;
+                    return (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => updateSettings({ jarvisVoiceRate: preset.val })}
+                        className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                          isSelected
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
+                            : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-300 font-semibold block text-[11px]">
+                  Timbre do J.A.R.V.I.S.:
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { label: 'Grave Stark', val: 0.90 },
+                    { label: 'Natural', val: 0.98 },
+                    { label: 'Claro', val: 1.05 },
+                  ].map((preset) => {
+                    const currentPitch = settings.jarvisVoicePitch !== undefined ? settings.jarvisVoicePitch : 0.95;
+                    const isSelected = Math.abs(currentPitch - preset.val) < 0.05;
+                    return (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => updateSettings({ jarvisVoicePitch: preset.val })}
+                        className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                          isSelected
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
+                            : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de Teste */}
+            <div className="pt-1 flex items-center justify-between">
+              <p className="text-[10px] text-slate-400">
+                💡 Vozes marcadas com <strong className="text-cyan-300">⭐ [NEURAL]</strong> utilizam redes neurais humanas.
+              </p>
+              <button
+                type="button"
+                disabled={testingVoice}
+                onClick={handleTestVoice}
+                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-gamer-950 font-bold text-xs flex items-center gap-1.5 shadow-glow-cyan hover:brightness-110 active:scale-95 transition-all"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{testingVoice ? 'Falando...' : 'Testar Voz'}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Notificação de Ação Executada em Tempo Real */}
         {lastExecutedAction && (

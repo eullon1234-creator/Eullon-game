@@ -2,10 +2,11 @@ import React, { useState, useRef } from 'react';
 import { 
   Moon, Sun, Download, Upload, Trash2, RotateCcw, 
   Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw,
-  Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap 
+  Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap, Volume2, SlidersHorizontal, Play
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
+import { speechService, VoiceOption } from '../services/speechService';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -46,6 +47,32 @@ export const SettingsView: React.FC = () => {
     } finally {
       setTestingGroq(false);
     }
+  };
+
+  const [settingsVoiceList, setSettingsVoiceList] = useState<VoiceOption[]>(() => speechService.getAvailableVoices());
+  const [testingVoiceSettings, setTestingVoiceSettings] = useState(false);
+
+  React.useEffect(() => {
+    const updateVoices = () => {
+      setSettingsVoiceList(speechService.getAvailableVoices());
+    };
+    updateVoices();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+    }
+  }, []);
+
+  const handleTestVoiceSettings = () => {
+    if (testingVoiceSettings) return;
+    setTestingVoiceSettings(true);
+    speechService.testVoice(
+      {
+        voiceURI: settings.jarvisVoiceURI,
+        rate: settings.jarvisVoiceRate,
+        pitch: settings.jarvisVoicePitch,
+      },
+      () => setTestingVoiceSettings(false)
+    );
   };
 
   const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -395,6 +422,46 @@ export const SettingsView: React.FC = () => {
           <p className="text-[11px] text-slate-400 leading-relaxed">
             Sua chave está ativa! O aplicativo utiliza os modelos de ponta <strong>Qwen 3.8 27B</strong> e <strong>GPT-OSS 120B</strong> rodando nos chips LPU do Groq para respostas quase instantâneas.
           </p>
+        </div>
+
+        {/* Calibração de Voz do J.A.R.V.I.S. */}
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="font-bold text-slate-300 flex items-center gap-1.5 text-xs">
+              <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Voz Neural do J.A.R.V.I.S. (Web Speech API)</span>
+            </label>
+            <button
+              type="button"
+              disabled={testingVoiceSettings}
+              onClick={handleTestVoiceSettings}
+              className="px-3 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-bold text-xs flex items-center gap-1.5 shadow-glow-cyan transition-all"
+            >
+              <Play className="w-3 h-3 fill-current" />
+              <span>{testingVoiceSettings ? 'Falando...' : 'Testar Voz'}</span>
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <select
+              value={settings.jarvisVoiceURI || ''}
+              onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
+              className="w-full px-3 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
+            >
+              {settingsVoiceList.length === 0 ? (
+                <option value="">Voz padrão do sistema operacional</option>
+              ) : (
+                settingsVoiceList.map((item, idx) => (
+                  <option key={idx} value={item.voice.voiceURI}>
+                    {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
+                  </option>
+                ))
+              )}
+            </select>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Dica: Vozes com <strong className="text-cyan-300">⭐ [NEURAL]</strong> (como <em>Microsoft Antonio Online Natural</em> no Edge ou <em>Google português</em> no Chrome) possuem entonação humana ultra-realista gerada por inteligência artificial.
+            </p>
+          </div>
         </div>
       </section>
 
