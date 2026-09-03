@@ -118,4 +118,17 @@ export const INITIAL_GAMES: Game[] = [
     createdAt: '2026-07-20T17:00:00Z',
     updatedAt: '2026-07-20T17:00:00Z',
   },
+  {
+    id: 'game-immortals-fenyx-rising',
+    title: 'Immortals Fenyx Rising',
+    coverUrl: 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2221920/library_600x900.jpg',
+    platform: 'PC 💲 (Comprado)',
+    status: 'backlog',
+    rating: 8.5,
+    favorite: true,
+    notes: 'Aventura mitológica em mundo aberto com exploração épica, quebra-cabeças e combates contra feras mitológicas.',
+    timeToBeat: { main: 25, extra: 45, completionist: 62 },
+    createdAt: '2026-09-03T20:00:00Z',
+    updatedAt: '2026-09-03T20:00:00Z',
+  },
 ];

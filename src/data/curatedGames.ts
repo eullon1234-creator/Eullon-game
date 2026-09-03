@@ -5961,6 +5961,17 @@ export const CURATED_GAMES: CuratedGame[] = [
     description: "Rangers do Deserto no Colorado congelado sob o comando do Patriarca em combates táticos em turnos profundos.",
     timeToBeat: {"main":37,"extra":58,"completionist":82},
   },
+  {
+    id: "immortals-fenyx-rising",
+    title: "Immortals Fenyx Rising",
+    category: ["openworld", "rpg", "hackslash", "steam_top", "gamepass"],
+    platform: "Multiplataforma",
+    rating: 8.5,
+    year: 2020,
+    coverUrl: "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2221920/header.jpg",
+    description: "Assuma o papel de Fenyx em uma missão épica para salvar os deuses gregos de Tifão. Desfrute de um mundo aberto mitológico vibrante, quebra-cabeças engenhosos e combates dinâmicos.",
+    timeToBeat: { main: 25, extra: 45, completionist: 62 },
+  },
   ...GBA_GAMES,
   ...STEAM_GAMEPASS_GAMES,
 ];
