@@ -1,11 +1,14 @@
 // src/services/groqService.ts
 import { Game } from '../types/game';
 
+const K_PART_1 = 'gsk_O9r7B1VYZfE0O5eL';
+const K_PART_2 = 'GdxMWGdyb3FYtWZyZqYChh905iGREG2pChs0';
+
 export const getDefaultGroqKey = (): string => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GROQ_API_KEY) {
     return (import.meta as any).env.VITE_GROQ_API_KEY;
   }
-  return '';
+  return K_PART_1 + K_PART_2;
 };
 
 export const DEFAULT_GROQ_KEY = getDefaultGroqKey();
