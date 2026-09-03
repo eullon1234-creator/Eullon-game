@@ -6,6 +6,7 @@ import { GameRatingBadge } from '../common/GameRatingBadge';
 import { QuickStatusMenu } from '../games/QuickStatusMenu';
 import { HowLongToBeatSection } from '../common/HowLongToBeatCard';
 import { groqService, GameInsightResult } from '../../services/groqService';
+import { trailerService, GameTrailer } from '../../services/trailerService';
 
 export const GameDetailModal: React.FC = () => {
   const {
@@ -26,13 +27,32 @@ export const GameDetailModal: React.FC = () => {
   const [aiInsights, setAiInsights] = useState<GameInsightResult | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [trailer, setTrailer] = useState<GameTrailer | null>(null);
+  const [loadingTrailer, setLoadingTrailer] = useState(false);
 
   // Reset insights e trailer ao mudar de jogo
   useEffect(() => {
     setAiInsights(null);
     setLoadingInsights(false);
     setShowTrailer(false);
+    setTrailer(null);
+    setLoadingTrailer(false);
   }, [selectedGame?.id]);
+
+  const handleOpenTrailer = async () => {
+    setShowTrailer(true);
+    if (trailer || !selectedGame) return;
+
+    setLoadingTrailer(true);
+    try {
+      const result = await trailerService.getGameTrailer(selectedGame.title, settings.rawgApiKey);
+      setTrailer(result);
+    } catch (err) {
+      console.error('Erro ao buscar trailer:', err);
+    } finally {
+      setLoadingTrailer(false);
+    }
+  };
 
   const handleFetchInsights = async () => {
     if (!selectedGame || loadingInsights) return;
@@ -288,32 +308,66 @@ export const GameDetailModal: React.FC = () => {
             {!showTrailer ? (
               <button
                 type="button"
-                onClick={() => setShowTrailer(true)}
+                onClick={handleOpenTrailer}
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600/20 to-amber-600/20 hover:from-rose-600/30 hover:to-amber-600/30 border border-rose-500/40 text-rose-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(244,63,94,0.15)] group"
               >
-                <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
                   <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                 </div>
                 <span>Assistir Trailer Oficial em Tela Cheia</span>
               </button>
-            ) : (
+            ) : loadingTrailer ? (
+              <div className="py-10 flex flex-col items-center justify-center space-y-2 bg-slate-950/80 rounded-xl border border-slate-800">
+                <RefreshCw className="w-6 h-6 text-rose-500 animate-spin" />
+                <p className="text-xs text-slate-400 font-medium">
+                  Localizando trailer oficial em alta definição...
+                </p>
+              </div>
+            ) : trailer?.videoId ? (
               <div className="space-y-2 animate-fadeIn">
                 <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-slate-700 shadow-2xl">
                   <iframe
-                    src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(selectedGame.title + ' official game trailer')}&autoplay=1`}
-                    title={`Trailer de ${selectedGame.title}`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    src={`https://www.youtube-nocookie.com/embed/${trailer.videoId}?autoplay=1&rel=0`}
+                    title={trailer.title || `Trailer de ${selectedGame.title}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     className="w-full h-full border-0"
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+                  <span className="line-clamp-1 text-[11px] text-slate-300" title={trailer.title}>
+                    🎬 {trailer.title}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setShowTrailer(false)}
-                    className="text-[11px] text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-gamer-800 hover:bg-gamer-750 transition-colors"
+                    className="text-[11px] text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-gamer-800 hover:bg-gamer-750 transition-colors shrink-0"
                   >
                     Fechar Vídeo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-center space-y-2.5 animate-fadeIn">
+                <p className="text-xs text-slate-300">
+                  Trailer disponível diretamente no canal oficial do YouTube.
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedGame.title + ' official trailer')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Assistir no YouTube</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowTrailer(false)}
+                    className="px-3 py-2 rounded-xl bg-gamer-800 hover:bg-gamer-750 text-slate-300 text-xs font-bold transition-all"
+                  >
+                    Fechar
                   </button>
                 </div>
               </div>
