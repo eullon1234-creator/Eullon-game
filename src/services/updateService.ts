@@ -1,6 +1,6 @@
 // src/services/updateService.ts
 
-export const CURRENT_APP_VERSION = '1.2.0';
+export const CURRENT_APP_VERSION = '1.2.1';
 export const GITHUB_REPO = 'eullon1234-creator/Eullon-game';
 
 export interface UpdateInfo {
