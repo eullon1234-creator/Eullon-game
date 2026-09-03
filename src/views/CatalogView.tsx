@@ -18,6 +18,8 @@ export const CatalogView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [durationFilter, setDurationFilter] = useState<'all' | 'short' | 'medium' | 'long' | 'epic'>('all');
+  const [catalogSort, setCatalogSort] = useState<'default' | 'time_asc' | 'time_desc' | 'rating_desc' | 'name_asc' | 'year_desc'>('default');
 
   // Mapeia títulos existentes na biblioteca para checar se o jogo já foi adicionado
   const existingGamesMap = useMemo(() => {
@@ -28,17 +30,48 @@ export const CatalogView: React.FC = () => {
     return map;
   }, [games]);
 
-  // Filtra os jogos pela categoria e busca
+  // Filtra os jogos pela categoria, busca, duração estimada e ordenação
   const filteredGames = useMemo(() => {
     return CURATED_GAMES.filter((game) => {
       const matchCategory = selectedCategory === 'all' || 
         (Array.isArray(game.category) ? game.category.includes(selectedCategory) : game.category === selectedCategory);
       const matchSearch = !searchQuery.trim() || 
         game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        game.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCategory && matchSearch;
+        game.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        game.platform.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (!matchCategory || !matchSearch) return false;
+
+      // Filtro de duração (HowLongToBeat)
+      if (durationFilter !== 'all') {
+        const hours = game.timeToBeat?.main || timeToBeatService.getTimeToBeat(game.title, game.category).main || 15;
+        if (durationFilter === 'short' && hours > 10) return false;
+        if (durationFilter === 'medium' && (hours <= 10 || hours > 25)) return false;
+        if (durationFilter === 'long' && (hours <= 25 || hours > 50)) return false;
+        if (durationFilter === 'epic' && hours <= 50) return false;
+      }
+
+      return true;
+    }).sort((a, b) => {
+      const getHours = (g: CuratedGame) => g.timeToBeat?.main || timeToBeatService.getTimeToBeat(g.title, g.category).main || 15;
+
+      switch (catalogSort) {
+        case 'time_asc':
+          return getHours(a) - getHours(b);
+        case 'time_desc':
+          return getHours(b) - getHours(a);
+        case 'rating_desc':
+          return b.rating - a.rating;
+        case 'name_asc':
+          return a.title.localeCompare(b.title);
+        case 'year_desc':
+          return b.year - a.year;
+        case 'default':
+        default:
+          return 0;
+      }
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, durationFilter, catalogSort]);
 
   // Adiciona um jogo individual
   const handleAddSingleGame = (item: CuratedGame, status: GameStatus = 'backlog') => {
@@ -225,6 +258,84 @@ export const CatalogView: React.FC = () => {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* Barra de Filtro de Tempo & Ordenação de Duração */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 rounded-2xl bg-gamer-900/80 border border-slate-800/90 shadow-sm">
+        {/* Pills de Duração */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin py-0.5">
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-wider mr-1 shrink-0">
+            <Clock className="w-3.5 h-3.5 text-neon-cyan" />
+            Duração:
+          </span>
+          {[
+            { id: 'all', label: 'Todas as Durações' },
+            { id: 'short', label: '⚡ Rápido (< 10h)' },
+            { id: 'medium', label: '🎯 Médio (10-25h)' },
+            { id: 'long', label: '🛡️ Longo (25-50h)' },
+            { id: 'epic', label: '👑 Demorado (+50h)' },
+          ].map((dur) => {
+            const isSelected = durationFilter === dur.id;
+            return (
+              <button
+                key={dur.id}
+                type="button"
+                onClick={() => setDurationFilter(dur.id as any)}
+                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                  isSelected
+                    ? isDeathNote
+                      ? 'bg-death-crimson border-death-crimson text-white shadow-glow-crimson scale-102'
+                      : 'bg-neon-cyan/20 border-neon-cyan text-white shadow-glow-cyan scale-102'
+                    : 'bg-gamer-850/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+                }`}
+              >
+                {dur.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Ordenação por Velocidade / Tempo */}
+        <div className="flex items-center gap-2 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-slate-800">
+          <button
+            type="button"
+            onClick={() => setCatalogSort((prev) => prev === 'time_asc' ? 'default' : 'time_asc')}
+            className={`flex-1 md:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+              catalogSort === 'time_asc'
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-glow-cyan'
+                : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+            }`}
+            title="Ordenar pelos jogos mais rápidos primeiro (menor tempo de campanha)"
+          >
+            <span>⚡ Mais Rápido</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setCatalogSort((prev) => prev === 'time_desc' ? 'default' : 'time_desc')}
+            className={`flex-1 md:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+              catalogSort === 'time_desc'
+                ? 'bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm'
+                : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+            }`}
+            title="Ordenar pelos jogos mais longos/demorados primeiro (maior tempo de campanha)"
+          >
+            <span>⏳ Mais Demorado</span>
+          </button>
+
+          <select
+            value={catalogSort}
+            onChange={(e) => setCatalogSort(e.target.value as any)}
+            className="px-3 py-1.5 rounded-xl bg-gamer-850 border border-slate-800 text-slate-300 text-xs font-bold focus:outline-none focus:border-neon-cyan"
+          >
+            <option value="default">Ordem Padrão</option>
+            <option value="time_asc">⚡ Mais Rápido Primeiro</option>
+            <option value="time_desc">⏳ Mais Demorado Primeiro</option>
+            <option value="rating_desc">⭐ Maior Nota</option>
+            <option value="name_asc">🔤 Nome (A - Z)</option>
+            <option value="year_desc">📅 Mais Recentes</option>
+          </select>
         </div>
       </div>
 

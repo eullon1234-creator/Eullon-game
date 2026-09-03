@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Search, Filter, LayoutGrid, List, Plus, X, Heart, Sparkles 
+  Search, Filter, LayoutGrid, List, Plus, X, Heart, Sparkles, Clock, ArrowUpDown 
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { GameCard } from '../components/games/GameCard';
@@ -151,6 +151,75 @@ export const LibraryView: React.FC = () => {
                 {activeFiltersCount}
               </span>
             )}
+          </button>
+        </div>
+      </div>
+
+      {/* Barra Rápida de Duração & Ordenação de Tempo (HowLongToBeat) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-gamer-900/80 border border-slate-800/90 shadow-sm">
+        {/* Pills de Duração */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-thin py-0.5">
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 uppercase tracking-wider mr-1 shrink-0">
+            <Clock className="w-3.5 h-3.5 text-neon-cyan" />
+            Tempo:
+          </span>
+          {[
+            { id: 'all', label: 'Todos' },
+            { id: 'short', label: '⚡ Rápido (< 10h)' },
+            { id: 'medium', label: '🎯 Médio (10-25h)' },
+            { id: 'long', label: '🛡️ Longo (25-50h)' },
+            { id: 'epic', label: '👑 Demorado (+50h)' },
+          ].map((dur) => {
+            const isSelected = (filters.duration || 'all') === dur.id;
+            return (
+              <button
+                key={dur.id}
+                type="button"
+                onClick={() => setFilters((prev) => ({ ...prev, duration: dur.id as any }))}
+                className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                  isSelected
+                    ? 'bg-neon-cyan/20 border-neon-cyan text-white shadow-glow-cyan scale-102'
+                    : 'bg-gamer-850/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+                }`}
+              >
+                {dur.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Botões Rápidos de Ordenação Mais Rápido / Mais Demorado */}
+        <div className="flex items-center gap-1.5 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-800">
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ 
+              ...prev, 
+              sortBy: prev.sortBy === 'time_asc' ? 'recent' : 'time_asc' 
+            }))}
+            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+              filters.sortBy === 'time_asc'
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-glow-cyan'
+                : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+            }`}
+            title="Ordenar pelos jogos mais rápidos primeiro (menor tempo de campanha)"
+          >
+            <span>⚡ Mais Rápido</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFilters((prev) => ({ 
+              ...prev, 
+              sortBy: prev.sortBy === 'time_desc' ? 'recent' : 'time_desc' 
+            }))}
+            className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+              filters.sortBy === 'time_desc'
+                ? 'bg-purple-500/20 border-purple-500 text-purple-300 shadow-sm'
+                : 'bg-gamer-850 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-gamer-800'
+            }`}
+            title="Ordenar pelos jogos mais longos/demorados primeiro (maior tempo de campanha)"
+          >
+            <span>⏳ Mais Demorado</span>
           </button>
         </div>
       </div>

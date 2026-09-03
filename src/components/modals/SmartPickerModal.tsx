@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Dices, Play, Sparkles } from 'lucide-react';
+import { X, Dices, Play, Sparkles, Clock } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Game } from '../../types/game';
 import { useGame } from '../../context/GameContext';
 import { GameCoverImage } from '../common/GameCoverImage';
+import { timeToBeatService } from '../../services/timeToBeatService';
 
 export const SmartPickerModal: React.FC = () => {
   const {
@@ -17,8 +18,18 @@ export const SmartPickerModal: React.FC = () => {
 
   const isDeathNote = settings.theme === 'death-note';
   const [pickedGame, setPickedGame] = useState<Game | null>(null);
+  const [durationFilter, setDurationFilter] = useState<'all' | 'short' | 'medium' | 'long'>('all');
 
   const backlogGames = games.filter((g) => g.status === 'backlog');
+
+  const eligibleGames = backlogGames.filter((g) => {
+    if (durationFilter === 'all') return true;
+    const hours = g.timeToBeat?.main || timeToBeatService.getTimeToBeat(g.title).main || 15;
+    if (durationFilter === 'short') return hours <= 10;
+    if (durationFilter === 'medium') return hours > 10 && hours <= 25;
+    if (durationFilter === 'long') return hours > 25;
+    return true;
+  });
 
   const triggerPickerConfetti = () => {
     if (isDeathNote) {
@@ -43,18 +54,22 @@ export const SmartPickerModal: React.FC = () => {
     setPickedGame(null);
   };
 
-  const handleSpin = () => {
-    if (backlogGames.length === 0) return;
-    const randomChoice = backlogGames[Math.floor(Math.random() * backlogGames.length)];
+  const handleSpin = (customPool?: Game[]) => {
+    const pool = customPool || eligibleGames;
+    if (pool.length === 0) {
+      setPickedGame(null);
+      return;
+    }
+    const randomChoice = pool[Math.floor(Math.random() * pool.length)];
     setPickedGame(randomChoice);
     triggerPickerConfetti();
   };
 
   useEffect(() => {
-    if (isPickerModalOpen && backlogGames.length > 0 && !pickedGame) {
+    if (isPickerModalOpen && backlogGames.length > 0) {
       handleSpin();
     }
-  }, [isPickerModalOpen]);
+  }, [isPickerModalOpen, durationFilter]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,11 +122,39 @@ export const SmartPickerModal: React.FC = () => {
         <h3 className={`text-lg font-black text-white mb-1 ${isDeathNote ? 'font-deathnote text-2xl tracking-wider' : ''}`}>
           {isDeathNote ? 'Qual será o próximo jogo do caderno?' : 'O que eu vou jogar?'}
         </h3>
-        <p className={`text-xs mb-5 ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
+        <p className={`text-xs mb-3 ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
           {isDeathNote 
             ? 'Escolhido aleatoriamente das páginas do seu Backlog' 
             : 'Sorteado aleatoriamente dos seus jogos em Quero Jogar'}
         </p>
+
+        {/* Filtro Rápido de Duração no Sorteador */}
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-4">
+          {[
+            { id: 'all', label: 'Qualquer Duração' },
+            { id: 'short', label: '⚡ Rápido (< 10h)' },
+            { id: 'medium', label: '🎯 Médio (10-25h)' },
+            { id: 'long', label: '👑 Demorado (+25h)' },
+          ].map((dur) => {
+            const isSelected = durationFilter === dur.id;
+            return (
+              <button
+                key={dur.id}
+                type="button"
+                onClick={() => setDurationFilter(dur.id as any)}
+                className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all ${
+                  isSelected
+                    ? isDeathNote
+                      ? 'bg-death-crimson border-death-crimson text-white shadow-glow-crimson'
+                      : 'bg-neon-cyan/20 border-neon-cyan text-white shadow-glow-cyan'
+                    : 'bg-gamer-800 border-slate-700 text-slate-400 hover:text-white'
+                }`}
+              >
+                {dur.label}
+              </button>
+            );
+          })}
+        </div>
 
         {pickedGame ? (
           <div className="space-y-4">
@@ -122,11 +165,20 @@ export const SmartPickerModal: React.FC = () => {
             </div>
 
             <div>
-              <span className={`text-xs font-bold block mb-1 ${
-                isDeathNote ? 'text-death-crimson' : 'text-neon-cyan'
-              }`}>
-                {pickedGame.platform}
-              </span>
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className={`text-xs font-bold ${
+                  isDeathNote ? 'text-death-crimson' : 'text-neon-cyan'
+                }`}>
+                  {pickedGame.platform}
+                </span>
+
+                {/* Badge de Tempo Estimado */}
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-slate-300 bg-slate-800/90 border border-slate-700 px-2 py-0.5 rounded-md">
+                  <Clock className="w-3 h-3 text-neon-cyan" />
+                  ~{(pickedGame.timeToBeat?.main || timeToBeatService.getTimeToBeat(pickedGame.title).main)}h
+                </span>
+              </div>
+
               <h4 className="text-xl font-black text-white">
                 {pickedGame.title}
               </h4>
@@ -140,7 +192,7 @@ export const SmartPickerModal: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={handleSpin}
+                onClick={() => handleSpin()}
                 className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1.5 ${
                   isDeathNote
                     ? 'bg-death-850 hover:bg-death-800 text-death-parchment border-death-crimson/30 hover:border-death-crimson/60'
