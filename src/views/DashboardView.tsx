@@ -57,21 +57,21 @@ export const DashboardView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <button
             onClick={() => setIsPickerModalOpen(true)}
-            className="px-4 py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs sm:text-sm transition-all flex items-center gap-2 shadow-sm"
+            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-2xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm"
           >
-            <Dices className="w-4 h-4 text-amber-400" />
-            O que eu vou jogar?
+            <Dices className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="truncate">O que jogar?</span>
           </button>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 font-black text-xs sm:text-sm shadow-glow-cyan hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
+            className="flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-2xl bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 font-black text-xs sm:text-sm shadow-glow-cyan hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            Adicionar Jogo
+            <span className="truncate">Adicionar Jogo</span>
           </button>
         </div>
       </div>

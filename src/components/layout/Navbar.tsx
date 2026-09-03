@@ -35,45 +35,45 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-xl transition-colors duration-300 ${
+    <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-xl safe-top transition-colors duration-300 ${
       isDeathNote 
-        ? 'border-death-crimson/30 bg-death-950/90 shadow-[0_4px_25px_rgba(229,9,20,0.1)]' 
-        : 'border-slate-800/80 bg-gamer-950/85'
+        ? 'border-death-crimson/30 bg-death-950/95 shadow-[0_4px_25px_rgba(229,9,20,0.1)]' 
+        : 'border-slate-800/80 bg-gamer-950/90'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
         
         {/* Brand Logo */}
         <div
           onClick={() => setActiveTab('dashboard')}
-          className="flex items-center gap-2.5 cursor-pointer group flex-shrink-0"
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group flex-shrink-0 min-w-0"
         >
           {isDeathNote ? (
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-death-crimson via-red-900 to-black p-0.5 shadow-glow-crimson group-hover:scale-105 transition-transform duration-300">
-              <div className="w-full h-full bg-death-950 rounded-[14px] flex items-center justify-center text-death-crimson font-deathnote text-2xl font-bold select-none">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-death-crimson via-red-900 to-black p-0.5 shadow-glow-crimson group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
+              <div className="w-full h-full bg-death-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-death-crimson font-deathnote text-xl sm:text-2xl font-bold select-none">
                 𝕷
               </div>
             </div>
           ) : (
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-neon-cyan via-blue-600 to-purple-600 p-0.5 shadow-glow-cyan group-hover:scale-105 transition-transform duration-300">
-              <div className="w-full h-full bg-gamer-950 rounded-[14px] flex items-center justify-center text-neon-cyan">
-                <Gamepad2 className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-neon-cyan via-blue-600 to-purple-600 p-0.5 shadow-glow-cyan group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
+              <div className="w-full h-full bg-gamer-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-neon-cyan">
+                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform duration-300" />
               </div>
             </div>
           )}
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className={`font-black text-base sm:text-lg tracking-tight text-white transition-colors ${
-                isDeathNote ? 'font-deathnote text-xl sm:text-2xl group-hover:text-death-crimson' : 'group-hover:text-neon-cyan'
+              <span className={`font-black text-xs sm:text-lg tracking-tight text-white transition-colors truncate ${
+                isDeathNote ? 'font-deathnote text-base sm:text-2xl group-hover:text-death-crimson' : 'group-hover:text-neon-cyan'
               }`}>
-                {isDeathNote ? 'DEATH NOTE' : 'GAME TRACKER'}
+                {isDeathNote ? 'DEATH NOTE' : 'EULLON GAME'}
               </span>
-              <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider ${
+              <span className={`text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider hidden xs:inline-flex ${
                 isDeathNote 
                   ? 'bg-death-crimson/20 text-death-crimson border-death-crimson/40 font-deathnote-sub' 
                   : 'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/40'
               }`}>
-                {isDeathNote ? 'GAME LOG' : 'PRO'}
+                {isDeathNote ? 'LOG' : 'PRO'}
               </span>
             </div>
             <p className={`text-[10px] -mt-1 hidden sm:block ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
@@ -82,7 +82,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Search Bar */}
+        {/* Global Search Bar (Desktop) */}
         <div className="flex-1 max-w-md hidden md:block">
           <button
             type="button"
@@ -110,8 +110,8 @@ export const Navbar: React.FC = () => {
         </div>
 
         {/* Quick Tools */}
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Cloud Sync Status Badge */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          {/* Cloud Sync Status Badge (Desktop) */}
           <div
             className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${
               isCloudConnected
@@ -136,6 +136,7 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
+          {/* Search Button on Mobile */}
           <button
             onClick={() => setIsSearchModalOpen(true)}
             className={`md:hidden p-2 rounded-xl border ${
@@ -151,7 +152,7 @@ export const Navbar: React.FC = () => {
           {/* Sorteador */}
           <button
             onClick={() => setIsPickerModalOpen(true)}
-            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
+            className={`p-2 sm:px-3 sm:py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
               isDeathNote
                 ? 'bg-death-crimson/15 hover:bg-death-crimson/25 border-death-crimson/40 text-death-parchment hover:text-white hover:shadow-glow-crimson'
                 : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/30 text-amber-300 hover:text-white'
@@ -172,7 +173,7 @@ export const Navbar: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsAIAssistantOpen(true)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-sm group ${
+            className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-sm group ${
               isDeathNote
                 ? 'bg-red-950/40 hover:bg-red-900/60 border-death-crimson/50 text-death-parchment hover:text-white shadow-glow-crimson'
                 : 'bg-gamer-900/90 hover:bg-gamer-850 border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white shadow-[0_0_15px_rgba(0,242,254,0.15)] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)]'
@@ -183,7 +184,7 @@ export const Navbar: React.FC = () => {
             <span className="hidden sm:inline font-mono tracking-wider text-[11px]">J.A.R.V.I.S.</span>
           </button>
 
-          {/* Theme Cycler (Gamer Dark -> Death Note -> Light) */}
+          {/* Theme Cycler */}
           <button
             onClick={cycleTheme}
             className={`p-2 rounded-xl border transition-all ${
@@ -191,13 +192,7 @@ export const Navbar: React.FC = () => {
                 ? 'bg-death-900 border-death-crimson/50 hover:border-death-crimson text-death-crimson shadow-glow-crimson'
                 : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
-            title={`Tema atual: ${
-              settings.theme === 'death-note'
-                ? 'Death Note (Clique para Claro)'
-                : settings.theme === 'dark'
-                ? 'Escuro Gamer (Clique para Death Note)'
-                : 'Claro (Clique para Escuro)'
-            }`}
+            title="Mudar Tema"
           >
             {settings.theme === 'death-note' ? (
               <span className="text-sm leading-none select-none block transform hover:scale-110 transition-transform">
@@ -213,11 +208,12 @@ export const Navbar: React.FC = () => {
           {/* Add Game */}
           <button
             onClick={handleOpenAdd}
-            className={`px-3 sm:px-4 py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0 ${
+            className={`p-2 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0 ${
               isDeathNote
                 ? 'bg-gradient-to-r from-death-crimson via-red-600 to-red-800 text-white shadow-glow-crimson hover:brightness-110 border border-red-500/30'
                 : 'bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 shadow-glow-cyan hover:brightness-110'
             }`}
+            title="Adicionar Jogo"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span className="hidden sm:inline">

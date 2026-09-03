@@ -31,22 +31,40 @@
     --accent-crimson: #e50914;
   }
 
-  body {
+  html, body {
     background-color: var(--bg-primary);
     color: var(--text-main);
     font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+    max-width: 100vw;
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: none;
   }
 
   #root {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
     margin: 0;
     padding: 0;
   }
+}
+
+/* Safe area utilities for mobile */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Custom Scrollbar for gaming feel */

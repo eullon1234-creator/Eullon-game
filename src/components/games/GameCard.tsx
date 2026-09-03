@@ -145,21 +145,23 @@ export const GameCard: React.FC<GameCardProps> = ({
         </div>
 
         {/* Bottom Cover Gradient: Rating & Platform & Time */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-gamer-950 via-gamer-950/80 to-transparent p-3 pt-8 flex items-end justify-between z-10 pointer-events-none">
-          <div className="flex flex-col gap-1 items-start">
-            <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md border ${getPlatformBadgeStyle(game.platform)}`}>
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-gamer-950 via-gamer-950/85 to-transparent p-2 sm:p-3 pt-6 flex items-end justify-between gap-1 z-10 pointer-events-none">
+          <div className="flex flex-col gap-1 items-start min-w-0 flex-1">
+            <span className={`inline-flex items-center text-[10px] sm:text-[11px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md backdrop-blur-md border max-w-[100px] sm:max-w-none truncate ${getPlatformBadgeStyle(game.platform)}`}>
               {game.platform}
             </span>
             {time.main && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-slate-200 bg-black/60 backdrop-blur-md border border-slate-700/60 px-1.5 py-0.5 rounded" title="Tempo estimado para zerar">
-                <Clock className="w-2.5 h-2.5 text-neon-cyan" />
-                {game.hoursPlayed ? `${game.hoursPlayed}h / ~${time.main}h` : `~${time.main}h`}
+              <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-mono font-bold text-slate-200 bg-black/70 backdrop-blur-md border border-slate-700/60 px-1.5 py-0.5 rounded" title="Tempo estimado para zerar">
+                <Clock className="w-2.5 h-2.5 text-neon-cyan shrink-0" />
+                <span className="truncate">{game.hoursPlayed ? `${game.hoursPlayed}h / ~${time.main}h` : `~${time.main}h`}</span>
               </span>
             )}
           </div>
 
           {game.rating !== undefined && (
-            <GameRatingBadge rating={game.rating} size="sm" />
+            <div className="shrink-0">
+              <GameRatingBadge rating={game.rating} size="sm" />
+            </div>
           )}
         </div>
 
@@ -205,9 +207,9 @@ export const GameCard: React.FC<GameCardProps> = ({
       </div>
 
       {/* Card Body */}
-      <div className="p-3.5 flex flex-col flex-1 justify-between bg-gamer-900/40">
+      <div className="p-2.5 sm:p-3.5 flex flex-col flex-1 justify-between bg-gamer-900/40">
         <div>
-          <h3 className="font-bold text-sm text-white group-hover:text-neon-cyan transition-colors line-clamp-1">
+          <h3 className="font-bold text-xs sm:text-sm text-white group-hover:text-neon-cyan transition-colors line-clamp-1">
             {game.title}
           </h3>
         </div>

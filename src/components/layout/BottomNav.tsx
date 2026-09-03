@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, Library, PlayCircle, BookMarked, 
-  MoreHorizontal, Heart, CheckCircle2, XCircle, Settings, X, Sparkles 
+  MoreHorizontal, Heart, CheckCircle2, XCircle, Settings, X, Sparkles,
+  Flame, Gift
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
@@ -23,7 +24,9 @@ export const BottomNav: React.FC = () => {
 
   const moreTabs = [
     { id: 'catalog' as NavigationTab, label: isDeathNote ? 'Grimório' : 'Catálogo', icon: <Sparkles className="w-5 h-5 text-amber-400" /> },
-    { id: 'completed' as NavigationTab, label: isDeathNote ? 'Finalizados' : 'Zerados', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
+    { id: 'deals' as NavigationTab, label: 'Promoções', icon: <Flame className="w-5 h-5 text-orange-400" /> },
+    { id: 'free-games' as NavigationTab, label: 'Jogos Grátis', icon: <Gift className="w-5 h-5 text-emerald-400" /> },
+    { id: 'completed' as NavigationTab, label: isDeathNote ? 'Finalizados' : 'Zerados', icon: <CheckCircle2 className="w-5 h-5 text-teal-400" /> },
     { id: 'abandoned' as NavigationTab, label: isDeathNote ? 'Desistências' : 'Desisti', icon: <XCircle className="w-5 h-5 text-rose-400" /> },
     { id: 'favorites' as NavigationTab, label: 'Favoritos', icon: <Heart className="w-5 h-5 text-rose-500" /> },
     { id: 'settings' as NavigationTab, label: 'Configurações', icon: <Settings className="w-5 h-5 text-slate-300" /> },
@@ -38,13 +41,16 @@ export const BottomNav: React.FC = () => {
           onClick={() => setIsMoreOpen(false)}
         >
           <div
-            className={`border-t rounded-t-3xl p-6 space-y-4 animate-slide-up ${
+            className={`border-t rounded-t-3xl p-5 pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] space-y-3.5 animate-slide-up max-h-[80vh] overflow-y-auto ${
               isDeathNote 
                 ? 'bg-death-900 border-death-crimson/40 text-death-parchment' 
                 : 'bg-gamer-900 border-slate-700/80'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Drawer Handle */}
+            <div className="w-10 h-1 rounded-full bg-slate-600/50 mx-auto -mt-1 mb-2" />
+
             <div className={`flex items-center justify-between pb-2 border-b ${
               isDeathNote ? 'border-death-crimson/20' : 'border-slate-800'
             }`}>
@@ -87,10 +93,10 @@ export const BottomNav: React.FC = () => {
       )}
 
       {/* Fixed Bottom Bar */}
-      <nav className={`fixed bottom-0 inset-x-0 z-40 md:hidden backdrop-blur-xl border-t py-2 px-3 flex items-center justify-around transition-colors duration-300 ${
+      <nav className={`fixed bottom-0 inset-x-0 z-40 md:hidden backdrop-blur-xl border-t py-1.5 px-2 pb-[calc(0.4rem+env(safe-area-inset-bottom,0px))] flex items-center justify-around transition-colors duration-300 ${
         isDeathNote 
           ? 'bg-death-950/95 border-death-crimson/30 shadow-[0_-4px_20px_rgba(229,9,20,0.15)]' 
-          : 'bg-gamer-950/90 border-slate-800/90'
+          : 'bg-gamer-950/95 border-slate-800/90'
       }`}>
         {mainTabs.map((tab) => {
           const isActive = activeTab === tab.id;

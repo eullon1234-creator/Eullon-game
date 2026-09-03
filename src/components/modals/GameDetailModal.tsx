@@ -106,7 +106,7 @@ export const GameDetailModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 overflow-y-auto safe-top safe-bottom">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fade-in"
@@ -114,9 +114,9 @@ export const GameDetailModal: React.FC = () => {
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-xl bg-gamer-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden z-10 my-8 animate-scale-in">
+      <div className="relative w-full max-w-xl bg-gamer-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden z-10 my-auto max-h-[90vh] flex flex-col animate-scale-in">
         {/* Banner with Game Cover Blurry Background */}
-        <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-gamer-950">
+        <div className="relative h-44 sm:h-56 w-full overflow-hidden bg-gamer-950 flex-shrink-0">
           <img
             src={selectedGame.coverUrl}
             alt=""
@@ -183,7 +183,7 @@ export const GameDetailModal: React.FC = () => {
         </div>
 
         {/* Content Body */}
-        <div className="p-6 pt-12 space-y-5">
+        <div className="p-4 sm:p-6 pt-12 space-y-5 overflow-y-auto flex-1">
           {/* HowLongToBeat Section */}
           <HowLongToBeatSection
             game={selectedGame}

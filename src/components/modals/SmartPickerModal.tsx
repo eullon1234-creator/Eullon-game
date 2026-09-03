@@ -123,9 +123,9 @@ export const SmartPickerModal: React.FC = () => {
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl safe-top safe-bottom animate-fadeIn"
     >
-      <div className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-hidden my-6 flex flex-col p-6 text-center animate-scaleIn border ${
+      <div className={`relative w-full max-w-md rounded-3xl shadow-2xl overflow-y-auto max-h-[92vh] my-auto flex flex-col p-4 sm:p-6 text-center animate-scaleIn border ${
         isDeathNote 
           ? 'bg-death-900 border-death-crimson/40 shadow-[0_0_50px_rgba(229,9,20,0.25)]' 
           : 'bg-gamer-900 border-slate-700/80'

@@ -173,15 +173,15 @@ export const GameFormModal: React.FC = () => {
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto safe-top safe-bottom animate-fadeIn"
     >
-      <div className="relative w-full max-w-xl rounded-3xl bg-gamer-900 border border-slate-700/80 shadow-2xl overflow-hidden my-6 flex flex-col max-h-[92vh]">
+      <div className="relative w-full max-w-xl rounded-3xl bg-gamer-900 border border-slate-700/80 shadow-2xl overflow-hidden my-auto flex flex-col max-h-[94vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-gamer-950/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-gamer-950/60 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan shadow-glow-cyan">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan shadow-glow-cyan flex-shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
               <h2 className="text-base font-bold text-white">
@@ -235,7 +235,7 @@ export const GameFormModal: React.FC = () => {
         )}
 
         {/* Form Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-5">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5">
           
           {/* 1. Nome do Jogo com Busca Automática de Capas */}
           <div>
@@ -603,7 +603,7 @@ export const GameFormModal: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-800 bg-gamer-950/80 flex items-center justify-between">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-800 bg-gamer-950/80 flex items-center justify-between flex-shrink-0">
           <button
             type="button"
             onClick={handleClose}

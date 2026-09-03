@@ -454,11 +454,11 @@ export const CatalogView: React.FC = () => {
                 </div>
 
                 {/* Informações do Jogo */}
-                <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
+                <div className="p-2.5 sm:p-3.5 flex-1 flex flex-col justify-between space-y-2 sm:space-y-2.5">
                   <div>
                     {/* Header info com Plataforma, Tempo HowLongToBeat e Ano */}
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-                      <span className="font-semibold text-neon-cyan/80">{item.platform}</span>
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1 gap-1">
+                      <span className="font-semibold text-neon-cyan/80 truncate max-w-[80px] sm:max-w-none">{item.platform}</span>
                       
                       <div className="flex items-center gap-1.5">
                         <span className="inline-flex items-center gap-0.5 text-[10px] font-mono font-medium text-slate-300 bg-slate-800/90 border border-slate-700/60 px-1.5 py-0.2 rounded" title="Tempo estimado para zerar a campanha principal">

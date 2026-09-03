@@ -320,10 +320,10 @@ export const AIAssistantModal: React.FC = () => {
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) setIsAIAssistantOpen(false); }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-2xl animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-2xl safe-top safe-bottom animate-fadeIn"
     >
       <div
-        className={`relative w-full max-w-2xl h-[88vh] max-h-[730px] rounded-3xl shadow-2xl flex flex-col overflow-hidden border animate-scaleIn ${
+        className={`relative w-full max-w-2xl h-[94vh] sm:h-[88vh] max-h-[750px] rounded-2xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border animate-scaleIn ${
           isDeathNote
             ? 'bg-death-950/98 border-death-crimson/50 shadow-[0_0_60px_rgba(229,9,20,0.3)]'
             : 'bg-gamer-950/98 border-cyan-500/40 shadow-[0_0_60px_rgba(0,242,254,0.2)]'
@@ -331,11 +331,11 @@ export const AIAssistantModal: React.FC = () => {
       >
         {/* Top Header • Stark Industries HUD */}
         <div
-          className={`flex items-center justify-between px-5 py-3.5 border-b backdrop-blur-md ${
+          className={`flex items-center justify-between px-3.5 sm:px-5 py-3 sm:py-3.5 border-b backdrop-blur-md flex-shrink-0 ${
             isDeathNote ? 'border-red-950/80 bg-death-900/80' : 'border-cyan-900/50 bg-gamer-900/80'
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <ArcReactor size="md" pulse={isSpeaking || isListening} />
             <div>
               <div className="flex items-center gap-2">
@@ -681,7 +681,7 @@ export const AIAssistantModal: React.FC = () => {
 
         {/* Bottom Input Field & Microphone */}
         <div
-          className={`p-3 sm:p-4 border-t ${
+          className={`p-2.5 sm:p-4 border-t flex-shrink-0 ${
             isDeathNote ? 'border-red-950/80 bg-death-900/90' : 'border-cyan-950/80 bg-gamer-900/95'
           }`}
         >
