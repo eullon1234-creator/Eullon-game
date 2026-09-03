@@ -41,11 +41,15 @@ jobs:
       - name: Build Web Assets (Vite)
         run: npm run build
 
+      - name: Copy Assets to Android App
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          cp -rf dist/* android/app/src/main/assets/public/
+          cp -f capacitor.config.json android/app/src/main/assets/capacitor.config.json
+          echo "[]" > android/app/src/main/assets/capacitor.plugins.json
+
       - name: Grant Execute Permission for Gradlew
         run: chmod +x android/gradlew
-
-      - name: Sync Capacitor Android
-        run: npx cap sync android || npx cap copy android
 
       - name: Build Android APK with Gradle
         run: |
