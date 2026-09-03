@@ -104,7 +104,25 @@ export const CatalogView: React.FC = () => {
     setSelectedIds(next);
   };
 
-  // Adiciona todos os selecionados ao backlog
+  // Jogos da visualização atual que ainda não estão na biblioteca
+  const unaddedFilteredGames = useMemo(() => {
+    return filteredGames.filter((g) => !existingGamesMap.has(g.title.trim().toLowerCase()));
+  }, [filteredGames, existingGamesMap]);
+
+  const allFilteredSelected = unaddedFilteredGames.length > 0 && 
+    unaddedFilteredGames.every((g) => selectedIds.has(g.id));
+
+  const toggleSelectAllFiltered = () => {
+    const next = new Set(selectedIds);
+    if (allFilteredSelected) {
+      unaddedFilteredGames.forEach((g) => next.delete(g.id));
+    } else {
+      unaddedFilteredGames.forEach((g) => next.add(g.id));
+    }
+    setSelectedIds(next);
+  };
+
+  // Adiciona todos os selecionados ao backlog ou zerados
   const handleAddBatch = (status: GameStatus = 'backlog') => {
     const toAdd = CURATED_GAMES.filter((g) => selectedIds.has(g.id));
     let addedCount = 0;
@@ -171,34 +189,70 @@ export const CatalogView: React.FC = () => {
           </p>
         </div>
 
-        {/* Ação em lote */}
-        {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 animate-scaleIn">
-            <span className="text-xs text-slate-300 font-semibold">
-              {selectedIds.size} selecionado(s)
-            </span>
+        {/* Ações em lote e Seleção Rápida */}
+        <div className="flex flex-wrap items-center gap-2">
+          {unaddedFilteredGames.length > 0 && (
             <button
               type="button"
-              onClick={() => handleAddBatch('backlog')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
-                isDeathNote 
-                  ? 'bg-death-crimson text-white shadow-glow-crimson hover:brightness-110' 
-                  : 'bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 shadow-glow-cyan hover:brightness-110'
+              onClick={toggleSelectAllFiltered}
+              className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                allFilteredSelected
+                  ? isDeathNote
+                    ? 'bg-death-crimson/20 border-death-crimson text-death-crimson shadow-glow-crimson'
+                    : 'bg-neon-cyan/20 border-neon-cyan text-neon-cyan shadow-glow-cyan'
+                  : isDeathNote
+                    ? 'bg-death-900 border-red-950/80 text-death-smoke hover:text-white hover:border-death-crimson/50'
+                    : 'bg-gamer-850 border-slate-700 text-slate-300 hover:text-white hover:bg-gamer-800'
               }`}
+              title={allFilteredSelected ? 'Desmarcar todos os jogos desta categoria' : 'Selecionar todos os jogos disponíveis nesta categoria'}
             >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Adicionar ao Backlog</span>
+              <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <span>
+                {allFilteredSelected 
+                  ? 'Desmarcar Todos' 
+                  : `Selecionar Todos (${unaddedFilteredGames.length})`}
+              </span>
             </button>
-            <button
-              type="button"
-              onClick={() => setSelectedIds(new Set())}
-              className="p-2 rounded-xl bg-gamer-850 border border-slate-700 text-slate-400 hover:text-white text-xs"
-              title="Limpar seleção"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+          )}
+
+          {selectedIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 animate-scaleIn">
+              <span className="text-xs text-slate-300 font-semibold px-1">
+                {selectedIds.size} selecionado(s)
+              </span>
+              <button
+                type="button"
+                onClick={() => handleAddBatch('backlog')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 ${
+                  isDeathNote 
+                    ? 'bg-death-crimson text-white shadow-glow-crimson hover:brightness-110' 
+                    : 'bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 shadow-glow-cyan hover:brightness-110'
+                }`}
+                title="Adicionar selecionados ao Backlog"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Adicionar ao Backlog</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleAddBatch('completed')}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-600/30 hover:border-emerald-400"
+                title="Adicionar selecionados como Zerados"
+              >
+                <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+                <span>Marcar Zerado</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set())}
+                className="p-2 rounded-xl bg-gamer-850 border border-slate-700 text-slate-400 hover:text-white text-xs"
+                title="Limpar seleção"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 2. Barra de Busca e Categorias */}

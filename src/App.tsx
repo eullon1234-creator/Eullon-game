@@ -13,6 +13,7 @@ import { GameFormModal } from './components/modals/GameFormModal';
 import { GameDetailModal } from './components/modals/GameDetailModal';
 import { SmartPickerModal } from './components/modals/SmartPickerModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
+import { AIAssistantModal } from './components/modals/AIAssistantModal';
 
 const AppContent: React.FC = () => {
   const { activeTab, settings } = useGame();
@@ -66,6 +67,7 @@ const AppContent: React.FC = () => {
       <GameDetailModal />
       <SmartPickerModal />
       <GlobalSearchModal />
+      <AIAssistantModal />
     </div>
   );
 };

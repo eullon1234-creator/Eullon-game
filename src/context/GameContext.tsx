@@ -46,6 +46,8 @@ interface GameContextType {
   setIsPickerModalOpen: (open: boolean) => void;
   isSearchModalOpen: boolean;
   setIsSearchModalOpen: (open: boolean) => void;
+  isAIAssistantOpen: boolean;
+  setIsAIAssistantOpen: (open: boolean) => void;
 
   // Actions
   addGame: (gameData: Omit<Game, 'id' | 'createdAt' | 'updatedAt'>) => Game;
@@ -81,6 +83,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPickerModalOpen, setIsPickerModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
 
   // Sync theme class
   useEffect(() => {
@@ -413,6 +416,8 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsPickerModalOpen,
         isSearchModalOpen,
         setIsSearchModalOpen,
+        isAIAssistantOpen,
+        setIsAIAssistantOpen,
         addGame,
         updateGame,
         deleteGame,

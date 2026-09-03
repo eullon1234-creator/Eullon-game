@@ -1,5 +1,5 @@
 import React from 'react';
-import { Gamepad2, Search, Plus, Dices, Moon, Sun, Cloud, CloudOff, BookOpen } from 'lucide-react';
+import { Gamepad2, Search, Plus, Dices, Moon, Sun, Cloud, CloudOff, BookOpen, Sparkles } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 
 export const Navbar: React.FC = () => {
@@ -7,6 +7,7 @@ export const Navbar: React.FC = () => {
     setIsAddModalOpen,
     setIsPickerModalOpen,
     setIsSearchModalOpen,
+    setIsAIAssistantOpen,
     setEditingGame,
     settings,
     updateSettings,
@@ -164,6 +165,21 @@ export const Navbar: React.FC = () => {
             <span className="hidden sm:inline">
               {isDeathNote ? 'Sortear Jogo' : 'O que jogar?'}
             </span>
+          </button>
+
+          {/* Botão IA Gamer (Groq) */}
+          <button
+            type="button"
+            onClick={() => setIsAIAssistantOpen(true)}
+            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
+              isDeathNote
+                ? 'bg-purple-950/40 hover:bg-purple-900/60 border-purple-500/40 text-purple-300 hover:text-white'
+                : 'bg-gradient-to-r from-neon-cyan/20 to-purple-600/20 hover:from-neon-cyan/30 hover:to-purple-600/30 border-neon-cyan/40 text-neon-cyan hover:text-white shadow-glow-cyan'
+            }`}
+            title="Abrir Assistente com IA (Groq)"
+          >
+            <Sparkles className="w-4 h-4 text-neon-cyan" />
+            <span className="hidden sm:inline">IA Gamer</span>
           </button>
 
           {/* Theme Cycler (Gamer Dark -> Death Note -> Light) */}

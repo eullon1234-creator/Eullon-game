@@ -38,6 +38,8 @@ export interface AppSettings {
   theme: ThemeMode;
   viewMode: 'grid' | 'list';
   rawgApiKey?: string;
+  groqApiKey?: string;
+  groqModel?: string;
 }
 
 export type SortOption = 

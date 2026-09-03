@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Dices, Play, Sparkles, Clock } from 'lucide-react';
+import { X, Dices, Play, Sparkles, Clock, Bot, Zap, RefreshCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Game } from '../../types/game';
 import { useGame } from '../../context/GameContext';
 import { GameCoverImage } from '../common/GameCoverImage';
 import { timeToBeatService } from '../../services/timeToBeatService';
+import { groqService } from '../../services/groqService';
 
 export const SmartPickerModal: React.FC = () => {
   const {
@@ -19,6 +20,8 @@ export const SmartPickerModal: React.FC = () => {
   const isDeathNote = settings.theme === 'death-note';
   const [pickedGame, setPickedGame] = useState<Game | null>(null);
   const [durationFilter, setDurationFilter] = useState<'all' | 'short' | 'medium' | 'long'>('all');
+  const [aiReasoning, setAiReasoning] = useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
   const backlogGames = games.filter((g) => g.status === 'backlog');
 
@@ -52,10 +55,12 @@ export const SmartPickerModal: React.FC = () => {
   const handleClose = () => {
     setIsPickerModalOpen(false);
     setPickedGame(null);
+    setAiReasoning(null);
   };
 
   const handleSpin = (customPool?: Game[]) => {
     const pool = customPool || eligibleGames;
+    setAiReasoning(null);
     if (pool.length === 0) {
       setPickedGame(null);
       return;
@@ -63,6 +68,34 @@ export const SmartPickerModal: React.FC = () => {
     const randomChoice = pool[Math.floor(Math.random() * pool.length)];
     setPickedGame(randomChoice);
     triggerPickerConfetti();
+  };
+
+  const handleAIPick = async () => {
+    if (eligibleGames.length === 0 || loadingAI) return;
+    setLoadingAI(true);
+    setAiReasoning(null);
+    try {
+      const completed = games.filter((g) => g.status === 'completed');
+      const moodText = durationFilter === 'short' 
+        ? 'Quero um jogo rápido e dinâmico (<10h) para zerar logo'
+        : durationFilter === 'long'
+          ? 'Quero uma jornada épica e demorada (+25h) para mergulhar fundo'
+          : undefined;
+
+      const result = await groqService.getSmartPickRecommendation(
+        eligibleGames,
+        completed,
+        moodText,
+        settings.groqApiKey
+      );
+      setPickedGame(result.game);
+      setAiReasoning(result.reasoning);
+      triggerPickerConfetti();
+    } catch (err: any) {
+      handleSpin();
+    } finally {
+      setLoadingAI(false);
+    }
   };
 
   useEffect(() => {
@@ -187,34 +220,82 @@ export const SmartPickerModal: React.FC = () => {
                   "{pickedGame.notes}"
                 </p>
               )}
+
+              {/* Justificativa da IA (quando gerada) */}
+              {aiReasoning && (
+                <div className={`mt-3 p-3 rounded-xl border text-left text-xs space-y-1 animate-fadeIn ${
+                  isDeathNote 
+                    ? 'bg-death-950/80 border-death-crimson/40 text-slate-300' 
+                    : 'bg-gamer-950/80 border-neon-cyan/40 text-slate-200'
+                }`}>
+                  <div className="flex items-center gap-1.5 font-bold text-neon-cyan text-[11px] uppercase tracking-wider">
+                    <Bot className="w-3.5 h-3.5" />
+                    <span>Por que a IA escolheu este jogo:</span>
+                  </div>
+                  <p className="leading-relaxed italic">
+                    "{aiReasoning}"
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+            <div className="space-y-2 pt-2">
+              {/* Botão de Decisão Inteligente com IA */}
               <button
                 type="button"
-                onClick={() => handleSpin()}
-                className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1.5 ${
-                  isDeathNote
-                    ? 'bg-death-850 hover:bg-death-800 text-death-parchment border-death-crimson/30 hover:border-death-crimson/60'
-                    : 'bg-gamer-800 hover:bg-gamer-750 text-slate-300 hover:text-white border-slate-700'
+                disabled={loadingAI}
+                onClick={handleAIPick}
+                className={`w-full py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-2 shadow-sm ${
+                  loadingAI
+                    ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
+                    : isDeathNote
+                      ? 'bg-purple-950/50 hover:bg-purple-900/70 border-purple-500/50 text-purple-200 hover:text-white'
+                      : 'bg-gradient-to-r from-neon-cyan/20 via-purple-600/20 to-blue-600/20 hover:from-neon-cyan/30 hover:to-blue-600/30 border-neon-cyan/40 text-neon-cyan hover:text-white shadow-glow-cyan'
                 }`}
               >
-                {isDeathNote ? <span className="text-sm">🎲</span> : <Dices className="w-4 h-4" />}
-                {isDeathNote ? 'Sortear Outro' : 'Sortear Outro'}
+                {loadingAI ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin text-neon-cyan" />
+                    <span>Avaliando seu backlog com IA do Groq...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-neon-cyan" />
+                    <span>Pedir para a IA Escolher o Ideal</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      Groq ⚡
+                    </span>
+                  </>
+                )}
               </button>
 
-              <button
-                type="button"
-                onClick={() => handleStartPlaying(pickedGame)}
-                className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
-                  isDeathNote
-                    ? 'bg-gradient-to-r from-death-crimson to-red-800 text-white shadow-glow-crimson hover:brightness-110'
-                    : 'bg-gradient-to-r from-emerald-400 to-teal-500 text-gamer-950 shadow-glow-emerald hover:brightness-110'
-                }`}
-              >
-                <Play className="w-4 h-4 fill-current" />
-                {isDeathNote ? 'Iniciar no Caderno' : 'Começar a Jogar'}
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSpin()}
+                  className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-bold text-xs border transition-all flex items-center justify-center gap-1.5 ${
+                    isDeathNote
+                      ? 'bg-death-850 hover:bg-death-800 text-death-parchment border-death-crimson/30 hover:border-death-crimson/60'
+                      : 'bg-gamer-800 hover:bg-gamer-750 text-slate-300 hover:text-white border-slate-700'
+                  }`}
+                >
+                  {isDeathNote ? <span className="text-sm">🎲</span> : <Dices className="w-4 h-4" />}
+                  <span>Sorteio Aleatório</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleStartPlaying(pickedGame)}
+                  className={`w-full sm:w-1/2 py-2.5 px-3 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+                    isDeathNote
+                      ? 'bg-gradient-to-r from-death-crimson to-red-800 text-white shadow-glow-crimson hover:brightness-110'
+                      : 'bg-gradient-to-r from-emerald-400 to-teal-500 text-gamer-950 shadow-glow-emerald hover:brightness-110'
+                  }`}
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>{isDeathNote ? 'Iniciar no Caderno' : 'Começar a Jogar'}</span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (

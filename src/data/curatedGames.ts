@@ -1,4 +1,5 @@
 import { TimeToBeat } from '../types/game';
+import { GBA_GAMES } from './gbaGames';
 
 export interface CuratedGame {
   id: string;
@@ -21,6 +22,7 @@ export interface GameCategory {
 
 export const CATALOG_CATEGORIES: GameCategory[] = [
   { id: 'all', name: 'Todos os Destaques', icon: '🌟', description: 'Seleção das maiores obras-primas de todos os tempos' },
+  { id: 'gba', name: 'Game Boy Advance (GBA)', icon: '👾', description: 'Os maiores clássicos inesquecíveis da era de ouro 32-bits portátil da Nintendo' },
   { id: 'ps2', name: 'Nostalgia PS2', icon: '🎮', description: 'A era de ouro do PlayStation 2: os maiores clássicos que marcaram gerações' },
   { id: 'pokemon', name: 'Universo Pokémon', icon: '⚡', description: 'Todas as gerações de treinadores de Kanto a Paldea' },
   { id: 'dragon_ball', name: 'Dragon Ball Z', icon: '🐉', description: 'Kamehameha, Super Saiyajin e os confrontos da obra de Akira Toriyama' },
@@ -5956,4 +5958,5 @@ export const CURATED_GAMES: CuratedGame[] = [
     description: "Rangers do Deserto no Colorado congelado sob o comando do Patriarca em combates táticos em turnos profundos.",
     timeToBeat: {"main":37,"extra":58,"completionist":82},
   },
+  ...GBA_GAMES,
 ];

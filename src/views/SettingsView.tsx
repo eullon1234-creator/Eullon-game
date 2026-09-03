@@ -2,9 +2,10 @@ import React, { useState, useRef } from 'react';
 import { 
   Moon, Sun, Download, Upload, Trash2, RotateCcw, 
   Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw,
-  Image as ImageIcon, Sparkles, Key, ExternalLink 
+  Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap 
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
+import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -31,6 +32,21 @@ export const SettingsView: React.FC = () => {
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [testingGroq, setTestingGroq] = useState(false);
+  const [groqTestResult, setGroqTestResult] = useState<{ success: boolean; latencyMs: number; error?: string } | null>(null);
+
+  const handleTestGroq = async () => {
+    setTestingGroq(true);
+    setGroqTestResult(null);
+    try {
+      const result = await groqService.testConnection(settings.groqApiKey);
+      setGroqTestResult(result);
+    } catch (err: any) {
+      setGroqTestResult({ success: false, latencyMs: 0, error: err.message });
+    } finally {
+      setTestingGroq(false);
+    }
+  };
 
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
@@ -277,6 +293,107 @@ export const SettingsView: React.FC = () => {
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
             O aplicativo já conta com uma chave global gratuita integrada para você não precisar configurar nada. Você pode pesquisar capas de qualquer plataforma (PC, PlayStation, Xbox, Switch, etc.) diretamente no formulário de jogos.
+          </p>
+        </div>
+      </section>
+
+      {/* Seção da Inteligência Artificial (Groq) */}
+      <section className="p-6 rounded-3xl bg-gamer-900/80 border border-slate-800 shadow-card space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-neon-cyan/15 border border-neon-cyan/40 flex items-center justify-center text-neon-cyan">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <span>Inteligência Artificial (Groq LPU)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                  <Zap className="w-3 h-3 fill-current" />
+                  Ultra-Fast
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">
+                Alimenta o Oráculo Gamer, dicas inteligentes de jogos e recomendações do backlog.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={testingGroq}
+              onClick={handleTestGroq}
+              className="px-3.5 py-1.5 rounded-xl bg-gamer-800 hover:bg-gamer-750 text-slate-300 hover:text-white border border-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${testingGroq ? 'animate-spin text-neon-cyan' : ''}`} />
+              <span>{testingGroq ? 'Testando...' : 'Testar Conexão'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Resultado do Teste */}
+        {groqTestResult && (
+          <div className={`p-3 rounded-2xl border text-xs flex items-center gap-2 animate-fadeIn ${
+            groqTestResult.success
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+          }`}>
+            {groqTestResult.success ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Conexão bem-sucedida!</strong> A API do Groq respondeu em <strong>{groqTestResult.latencyMs}ms</strong>. Modelo pronto para uso.
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>
+                  <strong>Falha na conexão:</strong> {groqTestResult.error}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <label className="font-bold text-slate-300 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-neon-cyan" />
+              Chave de API do Groq
+            </label>
+            <a
+              href="https://console.groq.com/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neon-cyan hover:underline flex items-center gap-1 text-[11px]"
+            >
+              <span>Console da Groq Cloud (Chave Grátis)</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Chave padrão já configurada e ativa..."
+              value={settings.groqApiKey || ''}
+              onChange={(e) => updateSettings({ groqApiKey: e.target.value })}
+              className="flex-1 px-3.5 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-neon-cyan text-xs font-mono"
+            />
+            {settings.groqApiKey && (
+              <button
+                type="button"
+                onClick={() => updateSettings({ groqApiKey: undefined })}
+                className="px-3 py-2 rounded-xl bg-gamer-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 text-xs font-bold border border-slate-700 transition-colors"
+                title="Restaurar chave padrão fornecida"
+              >
+                Restaurar Padrão
+              </button>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Sua chave está ativa! O aplicativo utiliza os modelos de ponta <strong>Qwen 3.8 27B</strong> e <strong>GPT-OSS 120B</strong> rodando nos chips LPU do Groq para respostas quase instantâneas.
           </p>
         </div>
       </section>

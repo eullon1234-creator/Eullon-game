@@ -9,6 +9,7 @@ export const DEFAULT_PLATFORMS: string[] = [
   'Xbox One',
   'Switch',
   'Switch 2',
+  'GBA',
   'Android',
   'iOS',
   'Outra',
