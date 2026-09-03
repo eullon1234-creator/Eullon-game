@@ -10,6 +10,7 @@ import {
   batchUploadGames, 
   clearAllFirestoreGames 
 } from '../services/firebase';
+import { timeToBeatService } from '../services/timeToBeatService';
 
 const DEFAULT_FILTERS: FilterOptions = {
   search: '',
@@ -17,6 +18,7 @@ const DEFAULT_FILTERS: FilterOptions = {
   platform: 'all',
   favoriteOnly: false,
   sortBy: 'recent',
+  duration: 'all',
 };
 
 interface GameContextType {
@@ -349,6 +351,15 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (filters.platform !== 'all' && game.platform !== filters.platform) return false;
       if (filters.favoriteOnly && !game.favorite) return false;
 
+      // Filtro por duração estimada
+      if (filters.duration && filters.duration !== 'all') {
+        const hours = game.timeToBeat?.main || timeToBeatService.getTimeToBeat(game.title).main || 15;
+        if (filters.duration === 'short' && hours > 10) return false;
+        if (filters.duration === 'medium' && (hours <= 10 || hours > 25)) return false;
+        if (filters.duration === 'long' && (hours <= 25 || hours > 50)) return false;
+        if (filters.duration === 'epic' && hours <= 50) return false;
+      }
+
       return true;
     }).sort((a, b) => {
       switch (filters.sortBy) {
@@ -362,6 +373,16 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return (a.rating || 0) - (b.rating || 0);
         case 'platform':
           return a.platform.localeCompare(b.platform);
+        case 'time_asc': {
+          const timeA = a.timeToBeat?.main || timeToBeatService.getTimeToBeat(a.title).main || 15;
+          const timeB = b.timeToBeat?.main || timeToBeatService.getTimeToBeat(b.title).main || 15;
+          return timeA - timeB;
+        }
+        case 'time_desc': {
+          const timeA = a.timeToBeat?.main || timeToBeatService.getTimeToBeat(a.title).main || 15;
+          const timeB = b.timeToBeat?.main || timeToBeatService.getTimeToBeat(b.title).main || 15;
+          return timeB - timeA;
+        }
         case 'recent':
         default:
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();

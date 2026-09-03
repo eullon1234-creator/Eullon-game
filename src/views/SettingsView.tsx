@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { 
   Moon, Sun, Download, Upload, Trash2, RotateCcw, 
-  Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw 
+  Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw,
+  Image as ImageIcon, Sparkles, Key, ExternalLink 
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { 
@@ -216,7 +217,71 @@ export const SettingsView: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Banco de Dados na Nuvem (Firebase) */}
+      {/* 2. Busca Automática de Capas (RAWG API) */}
+      <section className="p-6 rounded-3xl bg-gamer-900/80 border border-slate-800 shadow-card space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-neon-cyan/15 border border-neon-cyan/30 flex items-center justify-center text-neon-cyan">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                Busca Automática de Capas (RAWG Games API)
+              </h2>
+              <p className="text-xs text-slate-400">
+                Sugestões oficiais de pôsteres em alta resolução em 1 clique ao cadastrar jogos.
+              </p>
+            </div>
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 self-start sm:self-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            Ativo e Gratuito
+          </span>
+        </div>
+
+        <div className="space-y-3 pt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+            <label className="font-bold text-slate-300 flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-neon-cyan" />
+              Chave de API Personalizada (Opcional)
+            </label>
+            <a
+              href="https://rawg.io/apidocs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neon-cyan hover:underline flex items-center gap-1 text-[11px]"
+            >
+              <span>Gerar chave gratuita na RAWG (20.000 req/mês)</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Chave pública padrão já inclusa. Cole aqui caso deseje usar sua chave própria..."
+              value={settings.rawgApiKey || ''}
+              onChange={(e) => updateSettings({ rawgApiKey: e.target.value })}
+              className="flex-1 px-3.5 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-neon-cyan text-xs font-mono"
+            />
+            {settings.rawgApiKey && (
+              <button
+                type="button"
+                onClick={() => updateSettings({ rawgApiKey: undefined })}
+                className="px-3 py-2 rounded-xl bg-gamer-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 text-xs font-bold border border-slate-700 transition-colors"
+              >
+                Restaurar Padrão
+              </button>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            O aplicativo já conta com uma chave global gratuita integrada para você não precisar configurar nada. Você pode pesquisar capas de qualquer plataforma (PC, PlayStation, Xbox, Switch, etc.) diretamente no formulário de jogos.
+          </p>
+        </div>
+      </section>
+
+      {/* 3. Banco de Dados na Nuvem (Firebase) */}
       <section className="p-6 rounded-3xl bg-gamer-900/80 border border-slate-800 shadow-card space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2">

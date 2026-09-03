@@ -34,6 +34,7 @@ export const LibraryView: React.FC = () => {
     filters.status !== 'all',
     filters.platform !== 'all',
     filters.favoriteOnly,
+    filters.duration && filters.duration !== 'all',
     filters.search.trim().length > 0,
   ].filter(Boolean).length;
 
@@ -199,12 +200,46 @@ export const LibraryView: React.FC = () => {
                 className="w-full px-3 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-neon-cyan"
               >
                 <option value="recent">Mais Recentes</option>
+                <option value="time_asc">⏱️ Mais Curtos Primeiro (HowLongToBeat)</option>
+                <option value="time_desc">⏱️ Campanhas Mais Longas</option>
                 <option value="name_asc">Nome (A - Z)</option>
                 <option value="name_desc">Nome (Z - A)</option>
                 <option value="rating_desc">Maior Nota</option>
                 <option value="rating_asc">Menor Nota</option>
                 <option value="platform">Plataforma</option>
               </select>
+            </div>
+          </div>
+
+          {/* Filtro por Duração (HowLongToBeat) */}
+          <div className="pt-2 border-t border-slate-800">
+            <label className="block text-[11px] font-bold text-slate-400 uppercase mb-2">
+              Duração da Campanha (HowLongToBeat)
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { id: 'all', label: 'Todas as Durações' },
+                { id: 'short', label: '⚡ Curtos (< 10h)' },
+                { id: 'medium', label: '🎯 Médios (10-25h)' },
+                { id: 'long', label: '🛡️ Longos (25-50h)' },
+                { id: 'epic', label: '👑 Épicos (> 50h)' },
+              ].map((dur) => {
+                const isSelected = (filters.duration || 'all') === dur.id;
+                return (
+                  <button
+                    key={dur.id}
+                    type="button"
+                    onClick={() => setFilters((prev) => ({ ...prev, duration: dur.id as any }))}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                      isSelected
+                        ? 'bg-neon-cyan/20 border-neon-cyan text-white shadow-glow-cyan'
+                        : 'bg-gamer-800 border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {dur.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

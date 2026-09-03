@@ -4,6 +4,7 @@ import { useGame } from '../../context/GameContext';
 import { GameCoverImage } from '../common/GameCoverImage';
 import { GameRatingBadge } from '../common/GameRatingBadge';
 import { QuickStatusMenu } from '../games/QuickStatusMenu';
+import { HowLongToBeatSection } from '../common/HowLongToBeatCard';
 
 export const GameDetailModal: React.FC = () => {
   const {
@@ -13,8 +14,12 @@ export const GameDetailModal: React.FC = () => {
     setIsAddModalOpen,
     quickToggleFavorite,
     quickChangeStatus,
+    updateGame,
     deleteGame,
+    settings,
   } = useGame();
+
+  const isDeathNote = settings.theme === 'death-note';
 
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -44,21 +49,35 @@ export const GameDetailModal: React.FC = () => {
     handleClose();
   };
 
+  const handleUpdateHoursPlayed = (newHours: number) => {
+    if (!selectedGame) return;
+    const updated = {
+      ...selectedGame,
+      hoursPlayed: newHours,
+      updatedAt: new Date().toISOString(),
+    };
+    updateGame(selectedGame.id, { hoursPlayed: newHours });
+    setSelectedGame(updated);
+  };
+
   return (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl overflow-y-auto animate-fadeIn"
-    >
-      <div className="relative w-full max-w-xl rounded-3xl bg-gamer-900 border border-slate-700/80 shadow-2xl overflow-hidden my-6 flex flex-col">
-        
-        {/* Banner with blur backdrop */}
-        <div className="relative h-44 w-full overflow-hidden bg-gamer-950">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity animate-fade-in"
+        onClick={handleClose}
+      />
+
+      {/* Modal Container */}
+      <div className="relative w-full max-w-xl bg-gamer-900 border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden z-10 my-8 animate-scale-in">
+        {/* Banner with Game Cover Blurry Background */}
+        <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-gamer-950">
           <img
             src={selectedGame.coverUrl}
             alt=""
-            className="w-full h-full object-cover blur-2xl opacity-25 scale-110"
+            className="w-full h-full object-cover blur-md opacity-30 scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gamer-900 via-gamer-900/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gamer-900 via-gamer-900/50 to-transparent" />
 
           {/* Top action buttons */}
           <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
@@ -120,6 +139,13 @@ export const GameDetailModal: React.FC = () => {
 
         {/* Content Body */}
         <div className="p-6 pt-12 space-y-5">
+          {/* HowLongToBeat Section */}
+          <HowLongToBeatSection
+            game={selectedGame}
+            onUpdateHoursPlayed={handleUpdateHoursPlayed}
+            isDeathNote={isDeathNote}
+          />
+
           {/* Notes Section */}
           <div className="p-4 rounded-2xl bg-gamer-850/60 border border-slate-800">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">

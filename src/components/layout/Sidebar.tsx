@@ -1,10 +1,11 @@
 import React from 'react';
 import { 
   LayoutDashboard, Library, PlayCircle, CheckCircle2, 
-  BookMarked, XCircle, Heart, Settings, ChevronRight
+  BookMarked, XCircle, Heart, Settings, ChevronRight, Sparkles
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
+import { CURATED_GAMES } from '../../data/curatedGames';
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, games, settings } = useGame();
@@ -28,6 +29,13 @@ export const Sidebar: React.FC = () => {
       icon: <Library className="w-4 h-4" />,
       badge: games.length,
       badgeColor: isDeathNote ? 'bg-death-800 text-death-parchment/80 border border-death-crimson/20' : 'bg-gamer-800 text-slate-300',
+    },
+    {
+      id: 'catalog',
+      label: isDeathNote ? 'Grimório de Jogos' : 'Catálogo & Descoberta',
+      icon: <Sparkles className="w-4 h-4 text-amber-400" />,
+      badge: CURATED_GAMES.length,
+      badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
     },
     {
       id: 'playing',

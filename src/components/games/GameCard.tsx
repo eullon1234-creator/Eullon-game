@@ -1,10 +1,11 @@
 import React from 'react';
-import { Heart, Edit3, Trash2, BookOpen } from 'lucide-react';
+import { Heart, Edit3, Trash2, BookOpen, Clock } from 'lucide-react';
 import { Game } from '../../types/game';
 import { GameCoverImage } from '../common/GameCoverImage';
 import { GameRatingBadge } from '../common/GameRatingBadge';
 import { QuickStatusMenu } from './QuickStatusMenu';
 import { useGame } from '../../context/GameContext';
+import { timeToBeatService } from '../../services/timeToBeatService';
 
 interface GameCardProps {
   game: Game;
@@ -50,6 +51,8 @@ export const GameCard: React.FC<GameCardProps> = ({
     return 'bg-gamer-900/80 text-slate-200 border-slate-700/50';
   };
 
+  const time = game.timeToBeat || timeToBeatService.getTimeToBeat(game.title);
+
   // LIST VIEW
   if (viewMode === 'list') {
     return (
@@ -66,10 +69,17 @@ export const GameCard: React.FC<GameCardProps> = ({
             <h3 className="text-base font-bold text-white group-hover:text-neon-cyan transition-colors truncate">
               {game.title}
             </h3>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
               <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-md border ${getPlatformBadgeStyle(game.platform)}`}>
                 {game.platform}
               </span>
+
+              {time.main && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-slate-300 bg-slate-800/80 border border-slate-700/60 px-2 py-0.5 rounded-md" title="Tempo estimado para zerar">
+                  <Clock className="w-3 h-3 text-neon-cyan" />
+                  {game.hoursPlayed ? `${game.hoursPlayed}h / ~${time.main}h` : `~${time.main}h`}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -100,23 +110,18 @@ export const GameCard: React.FC<GameCardProps> = ({
     );
   }
 
-  // GRID / POSTER VIEW (Poster aspect-ratio 3:4)
+  // GRID VIEW (POSTER)
   return (
     <div
       onClick={handleOpenDetail}
-      className="group relative rounded-2xl bg-gamer-900/80 hover:bg-gamer-850 border border-slate-800/80 hover:border-slate-700/90 transition-all duration-300 cursor-pointer shadow-card hover:shadow-card-hover hover:-translate-y-1.5 flex flex-col overflow-hidden"
+      className="group relative flex flex-col rounded-2xl bg-gamer-900 border border-slate-800/80 hover:border-slate-700 transition-all duration-300 overflow-hidden cursor-pointer shadow-sm hover:shadow-card hover:-translate-y-1"
     >
-      {/* Cover with top badges and hover action overlay */}
-      <div className="relative w-full aspect-game-cover overflow-hidden bg-gamer-950">
-        <GameCoverImage
-          src={game.coverUrl}
-          alt={game.title}
-          aspectRatioClass="w-full h-full"
-          className="group-hover:scale-105 transition-transform duration-500"
-        />
+      {/* Aspect Poster 3:4 */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gamer-950">
+        <GameCoverImage src={game.coverUrl} alt={game.title} />
 
-        {/* Top Badges Overlay */}
-        <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between z-10 pointer-events-none">
+        {/* Top Floating Badges */}
+        <div className="absolute inset-x-0 top-0 p-2.5 flex items-center justify-between z-10 pointer-events-none">
           <div className="pointer-events-auto">
             <QuickStatusMenu
               currentStatus={game.status}
@@ -139,11 +144,19 @@ export const GameCard: React.FC<GameCardProps> = ({
           </button>
         </div>
 
-        {/* Bottom Cover Gradient: Rating & Platform */}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-gamer-950 via-gamer-950/70 to-transparent p-3 pt-8 flex items-end justify-between z-10 pointer-events-none">
-          <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md border ${getPlatformBadgeStyle(game.platform)}`}>
-            {game.platform}
-          </span>
+        {/* Bottom Cover Gradient: Rating & Platform & Time */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-gamer-950 via-gamer-950/80 to-transparent p-3 pt-8 flex items-end justify-between z-10 pointer-events-none">
+          <div className="flex flex-col gap-1 items-start">
+            <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md border ${getPlatformBadgeStyle(game.platform)}`}>
+              {game.platform}
+            </span>
+            {time.main && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-slate-200 bg-black/60 backdrop-blur-md border border-slate-700/60 px-1.5 py-0.5 rounded" title="Tempo estimado para zerar">
+                <Clock className="w-2.5 h-2.5 text-neon-cyan" />
+                {game.hoursPlayed ? `${game.hoursPlayed}h / ~${time.main}h` : `~${time.main}h`}
+              </span>
+            )}
+          </div>
 
           {game.rating !== undefined && (
             <GameRatingBadge rating={game.rating} size="sm" />

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gamepad2, ImageOff } from 'lucide-react';
+import { gameCoverService } from '../../services/gameCoverService';
 
 interface GameCoverImageProps {
   src?: string;
@@ -15,10 +16,29 @@ export const GameCoverImage: React.FC<GameCoverImageProps> = ({
   aspectRatioClass = 'aspect-[3/4]',
 }) => {
   const [loaded, setLoaded] = useState(false);
+  const [currentSrc, setCurrentSrc] = useState<string | undefined>(src);
+  const [hasTriedProxy, setHasTriedProxy] = useState(false);
   const [error, setError] = useState(false);
 
+  useEffect(() => {
+    setCurrentSrc(src);
+    setLoaded(false);
+    setError(false);
+    setHasTriedProxy(false);
+  }, [src]);
+
+  const handleError = () => {
+    if (!hasTriedProxy && currentSrc && !currentSrc.includes('weserv.nl')) {
+      // Tenta recuperar a imagem através do proxy otimizado
+      setHasTriedProxy(true);
+      setCurrentSrc(gameCoverService.getResilientImageUrl(currentSrc));
+    } else {
+      setError(true);
+    }
+  };
+
   // If no URL provided or error loading
-  if (!src || error) {
+  if (!currentSrc || error) {
     return (
       <div
         className={`relative w-full ${aspectRatioClass} bg-gradient-to-br from-gamer-850 via-gamer-800 to-gamer-900 flex flex-col items-center justify-center p-4 text-center border border-slate-800/80 rounded-xl overflow-hidden ${className}`}
@@ -45,11 +65,11 @@ export const GameCoverImage: React.FC<GameCoverImageProps> = ({
         </div>
       )}
       <img
-        src={src}
+        src={currentSrc}
         alt={alt}
         loading="lazy"
         onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
+        onError={handleError}
         className={`w-full h-full object-cover transition-all duration-500 ${
           loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}

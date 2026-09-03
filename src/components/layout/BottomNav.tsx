@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, Library, PlayCircle, BookMarked, 
-  MoreHorizontal, Heart, CheckCircle2, XCircle, Settings, X 
+  MoreHorizontal, Heart, CheckCircle2, XCircle, Settings, X, Sparkles 
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
@@ -22,6 +22,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   const moreTabs = [
+    { id: 'catalog' as NavigationTab, label: isDeathNote ? 'Grimório' : 'Catálogo', icon: <Sparkles className="w-5 h-5 text-amber-400" /> },
     { id: 'completed' as NavigationTab, label: isDeathNote ? 'Finalizados' : 'Zerados', icon: <CheckCircle2 className="w-5 h-5 text-emerald-400" /> },
     { id: 'abandoned' as NavigationTab, label: isDeathNote ? 'Desistências' : 'Desisti', icon: <XCircle className="w-5 h-5 text-rose-400" /> },
     { id: 'favorites' as NavigationTab, label: 'Favoritos', icon: <Heart className="w-5 h-5 text-rose-500" /> },

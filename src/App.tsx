@@ -6,6 +6,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { BottomNav } from './components/layout/BottomNav';
 import { DashboardView } from './views/DashboardView';
 import { LibraryView } from './views/LibraryView';
+import { CatalogView } from './views/CatalogView';
 import { StatusFilteredView } from './views/StatusFilteredView';
 import { SettingsView } from './views/SettingsView';
 import { GameFormModal } from './components/modals/GameFormModal';
@@ -23,6 +24,8 @@ const AppContent: React.FC = () => {
         return <DashboardView />;
       case 'library':
         return <LibraryView />;
+      case 'catalog':
+        return <CatalogView />;
       case 'playing':
         return <StatusFilteredView statusFilter="playing" />;
       case 'completed':
