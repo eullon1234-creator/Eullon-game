@@ -58,7 +58,7 @@ export const GameCard: React.FC<GameCardProps> = ({
     return (
       <div
         onClick={handleOpenDetail}
-        className="group relative flex flex-col sm:flex-row items-center justify-between gap-4 p-3.5 rounded-2xl bg-gamer-900/80 hover:bg-gamer-850 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-card"
+        className="group relative flex flex-col sm:flex-row items-center justify-between gap-4 p-3.5 rounded-2xl bg-gamer-900/80 hover:bg-gamer-850 border border-slate-800/80 hover:border-slate-700 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-card select-none"
       >
         <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
           <div className="w-14 h-18 sm:w-16 sm:h-20 flex-shrink-0 rounded-xl overflow-hidden shadow">
@@ -114,7 +114,7 @@ export const GameCard: React.FC<GameCardProps> = ({
   return (
     <div
       onClick={handleOpenDetail}
-      className="group relative flex flex-col rounded-2xl bg-gamer-900 border border-slate-800/80 hover:border-slate-700 transition-all duration-300 overflow-hidden cursor-pointer shadow-sm hover:shadow-card hover:-translate-y-1"
+      className="group relative flex flex-col rounded-2xl bg-gamer-900 border border-slate-800/80 hover:border-slate-700 transition-all duration-300 overflow-hidden cursor-pointer shadow-sm hover:shadow-card hover:-translate-y-1 select-none"
     >
       {/* Aspect Poster 3:4 */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-gamer-950">

@@ -68,9 +68,10 @@ export const GameCoverImage: React.FC<GameCoverImageProps> = ({
         src={currentSrc}
         alt={alt}
         loading="lazy"
+        draggable={false}
         onLoad={() => setLoaded(true)}
         onError={handleError}
-        className={`w-full h-full object-cover transition-all duration-500 ${
+        className={`w-full h-full object-cover pointer-events-none select-none transition-all duration-500 ${
           loaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       />

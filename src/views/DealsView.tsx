@@ -189,7 +189,8 @@ export const DealsView: React.FC = () => {
                     src={deal.thumb}
                     alt={deal.title}
                     loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    draggable={false}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none select-none"
                     onError={(e) => {
                       // Fallback placeholder
                       (e.target as HTMLElement).style.display = 'none';
