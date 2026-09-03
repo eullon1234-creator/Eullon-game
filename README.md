@@ -5,6 +5,9 @@
 🌐 **Acesse o App Online no GitHub Pages:**  
 👉 **[https://eullon1234-creator.github.io/Eullon-game/](https://eullon1234-creator.github.io/Eullon-game/)**
 
+💻 **Baixar Aplicativo para Computador (Windows):**  
+👉 **[Download do Instalador (.exe) no GitHub Releases](https://github.com/eullon1234-creator/Eullon-game/releases)**
+
 ---
 
 ## 📸 Sobre o Projeto
