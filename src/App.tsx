@@ -16,10 +16,23 @@ import { GameDetailModal } from './components/modals/GameDetailModal';
 import { SmartPickerModal } from './components/modals/SmartPickerModal';
 import { GlobalSearchModal } from './components/modals/GlobalSearchModal';
 import { AIAssistantModal } from './components/modals/AIAssistantModal';
+import { UpdateModal } from './components/modals/UpdateModal';
+import { updateService, UpdateInfo } from './services/updateService';
 
 const AppContent: React.FC = () => {
   const { activeTab, settings } = useGame();
   const isDeathNote = settings.theme === 'death-note';
+  const [updateInfo, setUpdateInfo] = React.useState<UpdateInfo | null>(null);
+  const [showAutoUpdateModal, setShowAutoUpdateModal] = React.useState(false);
+
+  React.useEffect(() => {
+    updateService.checkForUpdates().then((info) => {
+      if (info.hasUpdate) {
+        setUpdateInfo(info);
+        setShowAutoUpdateModal(true);
+      }
+    });
+  }, []);
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -74,6 +87,11 @@ const AppContent: React.FC = () => {
       <SmartPickerModal />
       <GlobalSearchModal />
       <AIAssistantModal />
+      <UpdateModal 
+        isOpen={showAutoUpdateModal} 
+        onClose={() => setShowAutoUpdateModal(false)} 
+        updateInfo={updateInfo} 
+      />
     </div>
   );
 };

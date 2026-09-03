@@ -2,11 +2,14 @@ import React, { useState, useRef } from 'react';
 import { 
   Moon, Sun, Download, Upload, Trash2, RotateCcw, 
   Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw,
-  Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap, Volume2, SlidersHorizontal, Play
+  Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap, Volume2, SlidersHorizontal, Play,
+  ArrowUpCircle, Smartphone, Monitor
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
 import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../services/speechService';
+import { updateService, CURRENT_APP_VERSION, UpdateInfo } from '../services/updateService';
+import { UpdateModal } from '../components/modals/UpdateModal';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -30,6 +33,8 @@ export const SettingsView: React.FC = () => {
     syncToCloudNow,
   } = useGame();
 
+  const isDeathNote = settings.theme === 'death-note';
+
   const [confirmClear, setConfirmClear] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [importStatus, setImportStatus] = useState<string | null>(null);
@@ -46,6 +51,25 @@ export const SettingsView: React.FC = () => {
       setGroqTestResult({ success: false, latencyMs: 0, error: err.message });
     } finally {
       setTestingGroq(false);
+    }
+  };
+
+  const [updateChecking, setUpdateChecking] = useState(false);
+  const [updateResult, setUpdateResult] = useState<UpdateInfo | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+  const handleCheckUpdate = async () => {
+    setUpdateChecking(true);
+    try {
+      const info = await updateService.checkForUpdates(true);
+      setUpdateResult(info);
+      if (info.hasUpdate) {
+        setShowUpdateModal(true);
+      }
+    } catch (err) {
+      // ignore
+    } finally {
+      setUpdateChecking(false);
     }
   };
 
@@ -823,6 +847,96 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Seção Atualizações do Aplicativo */}
+      <section className={`p-6 rounded-2xl border ${
+        isDeathNote
+          ? 'bg-death-900 border-death-crimson/30 shadow-death-crimson/5'
+          : 'bg-gamer-900 border-slate-800 shadow-xl'
+      }`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${
+              isDeathNote ? 'bg-death-crimson/20 text-death-crimson' : 'bg-neon-cyan/15 text-neon-cyan'
+            }`}>
+              <ArrowUpCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold">Atualizações do Sistema</h2>
+              <p className="text-xs text-slate-400">Verifique e baixe novas versões do APK ou PC diretamente pelo app</p>
+            </div>
+          </div>
+          <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+            v{CURRENT_APP_VERSION}
+          </span>
+        </div>
+
+        <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${
+          isDeathNote ? 'bg-death-950/60 border-death-parchment/10' : 'bg-gamer-950/60 border-slate-800/80'
+        }`}>
+          <div className="text-xs text-slate-300">
+            {updateChecking ? (
+              <span className="flex items-center gap-2 text-slate-300 font-medium">
+                <RefreshCw className="w-4 h-4 animate-spin text-neon-cyan" />
+                Consultando o GitHub por atualizações...
+              </span>
+            ) : updateResult ? (
+              updateResult.hasUpdate ? (
+                <div className="space-y-1">
+                  <div className="font-bold text-neon-cyan flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4" />
+                    Nova versão v{updateResult.latestVersion} disponível!
+                  </div>
+                  <div className="text-slate-400">Clique para abrir os detalhes e baixar o novo APK.</div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Você está na versão mais recente (v{CURRENT_APP_VERSION})!
+                </div>
+              )
+            ) : (
+              <div>
+                O aplicativo verifica atualizações via <strong>GitHub Releases</strong>.
+                Ao atualizar pelo APK baixado, seus dados e jogos salvos continuam intactos.
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {updateResult?.hasUpdate && (
+              <button
+                type="button"
+                onClick={() => setShowUpdateModal(true)}
+                className="flex-1 sm:flex-initial py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-gamer-950 text-xs font-black transition-all shadow-md flex items-center justify-center gap-1.5"
+              >
+                <Download className="w-4 h-4" />
+                Baixar v{updateResult.latestVersion}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCheckUpdate}
+              disabled={updateChecking}
+              className={`flex-1 sm:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-2 ${
+                isDeathNote
+                  ? 'bg-death-950 border-death-crimson/40 hover:bg-death-crimson hover:text-white text-death-parchment'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border-slate-700'
+              } disabled:opacity-50`}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${updateChecking ? 'animate-spin' : ''}`} />
+              {updateChecking ? 'Verificando...' : 'Verificar Atualização'}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <UpdateModal
+        isOpen={showUpdateModal}
+        onClose={() => setShowUpdateModal(false)}
+        updateInfo={updateResult}
+      />
     </div>
   );
 };
