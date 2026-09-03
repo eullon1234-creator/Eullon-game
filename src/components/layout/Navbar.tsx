@@ -1,6 +1,7 @@
 import React from 'react';
 import { Gamepad2, Search, Plus, Dices, Moon, Sun, Cloud, CloudOff, BookOpen, Sparkles } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
+import { ArcReactor } from '../common/ArcReactor';
 
 export const Navbar: React.FC = () => {
   const {
@@ -167,19 +168,19 @@ export const Navbar: React.FC = () => {
             </span>
           </button>
 
-          {/* Botão IA Gamer (Groq) */}
+          {/* Botão J.A.R.V.I.S. (Reator Arc Stark) */}
           <button
             type="button"
             onClick={() => setIsAIAssistantOpen(true)}
-            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
+            className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-sm group ${
               isDeathNote
-                ? 'bg-purple-950/40 hover:bg-purple-900/60 border-purple-500/40 text-purple-300 hover:text-white'
-                : 'bg-gradient-to-r from-neon-cyan/20 to-purple-600/20 hover:from-neon-cyan/30 hover:to-purple-600/30 border-neon-cyan/40 text-neon-cyan hover:text-white shadow-glow-cyan'
+                ? 'bg-red-950/40 hover:bg-red-900/60 border-death-crimson/50 text-death-parchment hover:text-white shadow-glow-crimson'
+                : 'bg-gamer-900/90 hover:bg-gamer-850 border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white shadow-[0_0_15px_rgba(0,242,254,0.15)] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)]'
             }`}
-            title="Abrir Assistente com IA (Groq)"
+            title="Ativar J.A.R.V.I.S. • Protocolo Stark"
           >
-            <Sparkles className="w-4 h-4 text-neon-cyan" />
-            <span className="hidden sm:inline">IA Gamer</span>
+            <ArcReactor size="sm" pulse className="group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline font-mono tracking-wider text-[11px]">J.A.R.V.I.S.</span>
           </button>
 
           {/* Theme Cycler (Gamer Dark -> Death Note -> Light) */}

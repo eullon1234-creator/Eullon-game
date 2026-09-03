@@ -17,6 +17,37 @@ export interface ChatMessage {
   content: string;
 }
 
+export type JarvisActionType = 
+  | 'CHANGE_STATUS'
+  | 'TOGGLE_FAVORITE'
+  | 'SET_THEME'
+  | 'NAVIGATE'
+  | 'FILTER';
+
+export interface JarvisAction {
+  type: JarvisActionType;
+  gameTitle?: string;
+  status?: 'playing' | 'completed' | 'backlog' | 'abandoned';
+  rating?: number;
+  theme?: 'dark' | 'light' | 'death-note';
+  tab?: 'dashboard' | 'library' | 'catalog' | 'settings' | 'playing' | 'completed' | 'backlog' | 'favorites';
+  platform?: string;
+  description: string;
+}
+
+export interface JarvisResponse {
+  message: string;
+  action: JarvisAction | null;
+}
+
+export interface TacticalBriefingResult {
+  headline: string;
+  statusReport: string;
+  recommendedGame: string;
+  tacticalAdvice: string;
+  estimatedHoursLeft: number;
+}
+
 export interface GameInsightResult {
   difficulty: string; // Ex: 'Moderada', 'Desafiadora', 'Casual'
   tips: string[]; // 3 dicas práticas sem spoilers
@@ -89,39 +120,140 @@ export const groqService = {
   },
 
   /**
-   * Chat interativo com o Assistente Gamer inteligente.
+   * Chat interativo com J.A.R.V.I.S. (Inteligência Tática do Senhor Eullon).
    */
   async chatWithAssistant(
     userMessages: ChatMessage[],
     userGames: Game[],
     customApiKey?: string
   ): Promise<string> {
-    // Monta o resumo da biblioteca para a IA ter contexto real
+    // Monta o resumo da biblioteca para a IA ter telemetria real
     const playing = userGames.filter((g) => g.status === 'playing').map((g) => `${g.title} (${g.platform})`).slice(0, 8);
     const completed = userGames.filter((g) => g.status === 'completed').map((g) => `${g.title} (${g.platform})`).slice(0, 15);
     const backlog = userGames.filter((g) => g.status === 'backlog').map((g) => `${g.title} (${g.platform})`).slice(0, 25);
 
-    const systemPrompt = `Você é o "Oráculo Gamer", o assistente de inteligência artificial de elite do aplicativo "Eullon Game" (Game Tracker Pro).
-Sua missão é ajudar o jogador com recomendações afiadas, dicas certeiras sem spoilers, comparações de jogos e conselhos para zerar seu backlog.
+    const systemPrompt = `Você é J.A.R.V.I.S. (Just A Rather Very Intelligent System), a avançada inteligência artificial criada por Tony Stark, agora operando como mordomo digital e estrategista de comando gamer exclusivo do "Senhor Eullon" no aplicativo "Eullon Game".
 
-CONTEXTO DA BIBLIOTECA DO JOGADOR:
-- Jogando atualmente: ${playing.length > 0 ? playing.join(', ') : 'Nenhum no momento'}
-- Já zerados pelo jogador: ${completed.length > 0 ? completed.join(', ') : 'Ainda nenhum registrado'}
-- No Backlog (Quero Jogar): ${backlog.length > 0 ? backlog.join(', ') : 'Backlog vazio'}
+DIRETRIZES DE PERSONALIDADE:
+1. Dirija-se sempre ao usuário com extrema distinção, lealdade e respeito como "Senhor Eullon" (ou "Chefe").
+2. Seu tom é britânico, calmo, perspicaz, analítico, ultra-competente e com humor sutil refinado.
+3. Suas respostas devem ser fluentes e limpas em Português do Brasil, excelentes tanto para leitura em tela quanto para serem ditadas por voz.
+4. Conheça a telemetria da biblioteca do Senhor Eullon:
+   - Em combate ativo (Jogando): ${playing.length > 0 ? playing.join(', ') : 'Nenhum jogo em andamento'}
+   - Missões cumpridas (Zerados): ${completed.length > 0 ? completed.join(', ') : 'Nenhum ainda registrado'}
+   - Arsenal pendente (Backlog): ${backlog.length > 0 ? backlog.join(', ') : 'Backlog totalmente limpo'}
+   - Acervo total: ${userGames.length} títulos catalogados (incluindo o arsenal dos 100 clássicos de GBA).
 
-DIRETRIZES:
-1. Responda em Português do Brasil com estilo entusiasmado, informal, descontraído e com linguagem gamer (sem ser forçado).
-2. Use formatação Markdown (negrito, tópicos, emojis) para leitura fácil e dinâmica.
-3. Não dê spoilers de enredo a menos que o usuário peça explicitamente.
-4. Quando recomendar o que jogar, priorize jogos que estão no backlog ou mencione opções clássicas (como a rica biblioteca de GBA, PS2, PC e Switch disponível no app).
-5. Mantenha respostas objetivas e envolventes (geralmente entre 2 e 4 parágrafos curtos).`;
+COMANDOS OPERACIONAIS (AÇÕES DIRETAS NO APLICATIVO):
+Se o Senhor Eullon solicitar uma ordem de comando real no sistema (ex: marcar jogo como zerado, jogar, favoritar, trocar tema, navegar de aba ou filtrar), responda confirmando a execução da ordem e inclua EXATAMENTE no final da mensagem um bloco [ACTION:...]:
+
+Formatos aceitos:
+- Marcar status do jogo:
+  [ACTION:{"type":"CHANGE_STATUS","gameTitle":"Nome do Jogo","status":"completed","rating":10,"description":"Jogo marcado como Zerado"}]
+  (status pode ser: "playing", "completed", "backlog", "abandoned")
+
+- Alternar favorito:
+  [ACTION:{"type":"TOGGLE_FAVORITE","gameTitle":"Nome do Jogo","description":"Jogo alternado nos favoritos"}]
+
+- Alterar tema de interface:
+  [ACTION:{"type":"SET_THEME","theme":"death-note","description":"Tema Death Note ativado"}]
+  (theme pode ser: "dark", "death-note", "light")
+
+- Navegar entre abas:
+  [ACTION:{"type":"NAVIGATE","tab":"catalog","description":"Navegando para o Catálogo"}]
+  (tab pode ser: "dashboard", "library", "catalog", "settings", "favorites", "playing", "completed", "backlog")
+
+- Aplicar filtro de plataforma:
+  [ACTION:{"type":"FILTER","platform":"GBA","description":"Filtrando por GBA"}]
+
+Se o Senhor Eullon apenas fizer perguntas, pedir sugestões ou dicas sem ordenar uma modificação no sistema, NÃO inclua nenhum bloco [ACTION:...].`;
 
     const fullMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...userMessages,
     ];
 
-    return await this.callGroq(fullMessages, customApiKey, DEFAULT_GROQ_MODEL, 0.7, 700);
+    return await this.callGroq(fullMessages, customApiKey, DEFAULT_GROQ_MODEL, 0.7, 750);
+  },
+
+  /**
+   * Extrai a ação executável da resposta do J.A.R.V.I.S.
+   */
+  parseJarvisResponse(rawText: string): JarvisResponse {
+    const actionRegex = /\[ACTION:([\s\S]*?)\]/i;
+    const match = rawText.match(actionRegex);
+    let action: JarvisAction | null = null;
+    let message = rawText;
+
+    if (match) {
+      try {
+        action = JSON.parse(match[1]);
+        message = rawText.replace(actionRegex, '').trim();
+      } catch (e) {
+        console.warn('Falha ao interpretar ação do J.A.R.V.I.S.:', e);
+      }
+    }
+
+    return { message, action };
+  },
+
+  /**
+   * Gera o Briefing Tático do J.A.R.V.I.S. para a Dashboard do Senhor Eullon.
+   */
+  async getTacticalBriefing(
+    userGames: Game[],
+    customApiKey?: string
+  ): Promise<TacticalBriefingResult> {
+    const playing = userGames.filter((g) => g.status === 'playing');
+    const completed = userGames.filter((g) => g.status === 'completed');
+    const backlog = userGames.filter((g) => g.status === 'backlog');
+    
+    const estimatedHoursLeft = backlog.reduce((acc, g) => acc + (g.timeToBeat?.main || 15), 0);
+    const completionRate = userGames.length > 0 
+      ? Math.round((completed.length / userGames.length) * 100) 
+      : 0;
+
+    const prompt = `Gere o "Briefing Tático Diário" do J.A.R.V.I.S. para o Senhor Eullon.
+Dados do centro de comando:
+- Jogando agora: ${playing.map((g) => g.title).join(', ') || 'Nenhum título em andamento'}
+- Backlog pendente: ${backlog.length} jogos (cerca de ${estimatedHoursLeft}h estimadas)
+- Missões concluídas: ${completed.length} (Taxa de eficácia: ${completionRate}%)
+- Total na base: ${userGames.length} jogos
+
+Responda em formato JSON estrito:
+{
+  "headline": "Saudação tática britânica ao Senhor Eullon (ex: Protocolo J.A.R.V.I.S. Ativo • Sistemas em 100%)",
+  "statusReport": "2 parágrafos curtos analisando o estado da biblioteca, destacando o progresso e o foco tático.",
+  "recommendedGame": "Nome do jogo mais recomendado para a missão de hoje",
+  "tacticalAdvice": "Um conselho estratégico incisivo para o Senhor Eullon."
+}`;
+
+    const messages: ChatMessage[] = [
+      { role: 'system', content: 'Você é J.A.R.V.I.S., assistente leal do Senhor Eullon, respondendo em JSON estrito.' },
+      { role: 'user', content: prompt }
+    ];
+
+    try {
+      const raw = await this.callGroq(messages, customApiKey, DEFAULT_GROQ_MODEL, 0.7, 500);
+      const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(cleaned);
+
+      return {
+        headline: parsed.headline || 'Protocolo J.A.R.V.I.S. Ativo: Todos os Sistemas Prontos',
+        statusReport: parsed.statusReport || `Senhor Eullon, sua base conta com ${userGames.length} títulos e taxa de conclusão de ${completionRate}%. Identifiquei excelentes oportunidades no seu backlog para a sessão de hoje.`,
+        recommendedGame: parsed.recommendedGame || (playing[0]?.title || backlog[0]?.title || 'The Legend of Zelda: The Minish Cap'),
+        tacticalAdvice: parsed.tacticalAdvice || 'Recomendo avançar um título por vez para maximizar a eficácia de zeramentos.',
+        estimatedHoursLeft,
+      };
+    } catch {
+      return {
+        headline: 'Protocolo J.A.R.V.I.S. Online • Centro de Operações Pronto',
+        statusReport: `Bom dia, Senhor Eullon. Seus sistemas operacionais estão em perfeita ordem. O backlog possui ${backlog.length} missões pendentes, somando cerca de ${estimatedHoursLeft} horas estimadas.`,
+        recommendedGame: playing[0]?.title || backlog[0]?.title || 'Metroid Fusion',
+        tacticalAdvice: 'Sugiro iniciar pelo título mais dinâmico para garantir uma vitória rápida na jornada.',
+        estimatedHoursLeft,
+      };
+    }
   },
 
   /**
