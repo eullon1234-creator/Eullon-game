@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Heart, Edit3, Trash2, Calendar, Star, Sparkles, Lightbulb, Zap, RefreshCw } from 'lucide-react';
+import { X, Heart, Edit3, Trash2, Calendar, Star, Sparkles, Lightbulb, Zap, RefreshCw, Film, Play, ExternalLink } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { GameCoverImage } from '../common/GameCoverImage';
 import { GameRatingBadge } from '../common/GameRatingBadge';
@@ -25,11 +25,13 @@ export const GameDetailModal: React.FC = () => {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [aiInsights, setAiInsights] = useState<GameInsightResult | null>(null);
   const [loadingInsights, setLoadingInsights] = useState(false);
+  const [showTrailer, setShowTrailer] = useState(false);
 
-  // Reset insights ao mudar de jogo
+  // Reset insights e trailer ao mudar de jogo
   useEffect(() => {
     setAiInsights(null);
     setLoadingInsights(false);
+    setShowTrailer(false);
   }, [selectedGame?.id]);
 
   const handleFetchInsights = async () => {
@@ -58,6 +60,7 @@ export const GameDetailModal: React.FC = () => {
   const handleClose = () => {
     setSelectedGame(null);
     setConfirmDelete(false);
+    setShowTrailer(false);
   };
 
   const handleEdit = () => {
@@ -260,6 +263,61 @@ export const GameDetailModal: React.FC = () => {
                 </div>
               </div>
             ) : null}
+          </div>
+
+          {/* Trailer Oficial do Jogo (YouTube Embed) */}
+          <div className="p-4 rounded-2xl bg-gamer-850/60 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Film className="w-4 h-4 text-rose-500" />
+                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Trailer Oficial & Gameplay
+                </span>
+              </div>
+              <a
+                href={`https://www.youtube.com/results?search_query=${encodeURIComponent(selectedGame.title + ' official trailer')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors"
+              >
+                <span>Abrir no YouTube</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {!showTrailer ? (
+              <button
+                type="button"
+                onClick={() => setShowTrailer(true)}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-rose-600/20 to-amber-600/20 hover:from-rose-600/30 hover:to-amber-600/30 border border-rose-500/40 text-rose-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(244,63,94,0.15)] group"
+              >
+                <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                </div>
+                <span>Assistir Trailer Oficial em Tela Cheia</span>
+              </button>
+            ) : (
+              <div className="space-y-2 animate-fadeIn">
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black border border-slate-700 shadow-2xl">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(selectedGame.title + ' official game trailer')}&autoplay=1`}
+                    title={`Trailer de ${selectedGame.title}`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowTrailer(false)}
+                    className="text-[11px] text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-gamer-800 hover:bg-gamer-750 transition-colors"
+                  >
+                    Fechar Vídeo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Notes Section */}

@@ -25,12 +25,44 @@ export type NavigationTab =
   | 'dashboard'
   | 'library'
   | 'catalog'
+  | 'deals'
+  | 'free-games'
   | 'playing'
   | 'completed'
   | 'backlog'
   | 'abandoned'
   | 'favorites'
   | 'settings';
+
+export interface CheapSharkDeal {
+  dealID: string;
+  gameID: string;
+  title: string;
+  storeID: string;
+  salePrice: string;
+  normalPrice: string;
+  isOnSale: string;
+  savings: string;
+  metacriticScore: string;
+  steamRatingText?: string;
+  steamRatingPercent?: string;
+  steamRatingCount?: string;
+  thumb: string;
+  dealRating: string;
+}
+
+export interface FreeToGameItem {
+  id: number;
+  title: string;
+  thumbnail: string;
+  short_description: string;
+  game_url: string;
+  genre: string;
+  platform: string;
+  publisher: string;
+  developer: string;
+  release_date: string;
+}
 
 export type ThemeMode = 'dark' | 'light' | 'death-note';
 

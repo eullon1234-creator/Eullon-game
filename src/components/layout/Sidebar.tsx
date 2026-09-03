@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   LayoutDashboard, Library, PlayCircle, CheckCircle2, 
-  BookMarked, XCircle, Heart, Settings, ChevronRight, Sparkles
+  BookMarked, XCircle, Heart, Settings, ChevronRight, Sparkles, Flame, Gift
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
@@ -36,6 +36,16 @@ export const Sidebar: React.FC = () => {
       icon: <Sparkles className="w-4 h-4 text-amber-400" />,
       badge: CURATED_GAMES.length,
       badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-500/30',
+    },
+    {
+      id: 'deals',
+      label: isDeathNote ? 'Ofertas do Mundo' : 'Promoções',
+      icon: <Flame className="w-4 h-4 text-amber-400" />,
+    },
+    {
+      id: 'free-games',
+      label: isDeathNote ? 'Jogos Liberados' : 'Jogos Grátis',
+      icon: <Gift className="w-4 h-4 text-purple-400" />,
     },
     {
       id: 'playing',

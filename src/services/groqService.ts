@@ -30,7 +30,7 @@ export interface JarvisAction {
   status?: 'playing' | 'completed' | 'backlog' | 'abandoned';
   rating?: number;
   theme?: 'dark' | 'light' | 'death-note';
-  tab?: 'dashboard' | 'library' | 'catalog' | 'settings' | 'playing' | 'completed' | 'backlog' | 'favorites';
+  tab?: 'dashboard' | 'library' | 'catalog' | 'deals' | 'free-games' | 'settings' | 'playing' | 'completed' | 'backlog' | 'favorites';
   platform?: string;
   description: string;
 }
@@ -161,7 +161,7 @@ Formatos aceitos:
 
 - Navegar entre abas:
   [ACTION:{"type":"NAVIGATE","tab":"catalog","description":"Navegando para o Catálogo"}]
-  (tab pode ser: "dashboard", "library", "catalog", "settings", "favorites", "playing", "completed", "backlog")
+  (tab pode ser: "dashboard", "library", "catalog", "deals", "free-games", "settings", "favorites", "playing", "completed", "backlog")
 
 - Aplicar filtro de plataforma:
   [ACTION:{"type":"FILTER","platform":"GBA","description":"Filtrando por GBA"}]
