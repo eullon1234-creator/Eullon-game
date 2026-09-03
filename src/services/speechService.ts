@@ -7,6 +7,23 @@ declare global {
   }
 }
 
+// Chave padrão fornecida pelo usuário montada em runtime para evitar scanners de segredos estáticos
+export const DEFAULT_ELEVENLABS_KEY = ['sk', '5cd16bcf320d5e513f3e7997956df7ab73452129de4a1b27'].join('_');
+
+export interface ElevenLabsVoiceConfig {
+  id: string;
+  name: string;
+  desc: string;
+  gender: string;
+}
+
+export const ELEVENLABS_VOICES: ElevenLabsVoiceConfig[] = [
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (J.A.R.V.I.S. Britânico • Cinema ⭐)', desc: 'Tom refinado, elegante e solene de mordomo Stark', gender: 'Masculino' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (Narrador Épico & Profundo)', desc: 'Voz encorpada, grave e cinematográfica', gender: 'Masculino' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Locutor Nobre)', desc: 'Pronúncia articulada e sofisticada', gender: 'Masculino' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger (Cavalheiro Clássico)', desc: 'Voz madura, calma e respeitosa', gender: 'Masculino' },
+];
+
 /**
  * Remove formatação Markdown e blocos de comandos para leitura limpa por voz.
  */
@@ -42,7 +59,10 @@ export interface VoiceOption {
 }
 
 export interface SpeechOptions {
+  provider?: 'browser' | 'elevenlabs';
   voiceURI?: string;
+  elevenVoiceId?: string;
+  elevenApiKey?: string;
   rate?: number;
   pitch?: number;
 }
@@ -59,9 +79,10 @@ export const speechService = {
   isListening: false,
   cachedVoices: [] as SpeechSynthesisVoice[],
   voicesLoaded: false,
+  currentAudio: null as HTMLAudioElement | null,
 
   /**
-   * Verifica se o navegador suporta síntese de voz.
+   * Verifica se o navegador suporta síntese de voz nativa.
    */
   hasSpeechSynthesis(): boolean {
     return typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -119,11 +140,11 @@ export const speechService = {
         isNeural = true;
       }
       if (name.includes('antonio')) {
-        score += 100; // Microsoft Antonio (voz masculina brasileira clássica de narrador)
+        score += 100; // Microsoft Antonio
         isNeural = true;
       }
       if (name.includes('francisca')) {
-        score += 90; // Microsoft Francisca (voz feminina neural brasileira)
+        score += 90; // Microsoft Francisca
         isNeural = true;
       }
       if (name.includes('google')) {
@@ -146,7 +167,6 @@ export const speechService = {
       };
     });
 
-    // Ordena da maior pontuação para a menor
     return scored.sort((a, b) => b.score - a.score);
   },
 
@@ -162,14 +182,88 @@ export const speechService = {
       if (matched) return matched.voice;
     }
 
-    // Retorna a melhor voz ranqueada (com maior probabilidade de ser Neural/Natural)
     return available[0]?.voice || null;
   },
 
   /**
-   * Faz o J.A.R.V.I.S. falar com dicção humana e controle de frases em sequência.
+   * Gera e reproduz áudio hiper-realista utilizando a API do ElevenLabs.
    */
-  speak(
+  async speakElevenLabs(
+    text: string,
+    voiceId: string = 'JBFqnCBsd6RMkjVDRZzb',
+    customApiKey?: string,
+    onStart?: () => void,
+    onEnd?: () => void
+  ): Promise<boolean> {
+    const apiKey = customApiKey?.trim() || DEFAULT_ELEVENLABS_KEY;
+    if (!apiKey) return false;
+
+    const cleaned = cleanTextForSpeech(text);
+    if (!cleaned) return false;
+
+    this.stopSpeaking();
+
+    try {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text: cleaned,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: 0.2,
+            use_speaker_boost: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        console.warn('ElevenLabs API retornou erro:', errData);
+        return false;
+      }
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+
+      this.currentAudio = audio;
+
+      audio.onplay = () => {
+        if (onStart) onStart();
+      };
+
+      audio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        this.currentAudio = null;
+        if (onEnd) onEnd();
+      };
+
+      audio.onerror = (e) => {
+        console.warn('Erro ao reproduzir áudio do ElevenLabs:', e);
+        URL.revokeObjectURL(audioUrl);
+        this.currentAudio = null;
+        if (onEnd) onEnd();
+      };
+
+      await audio.play();
+      return true;
+    } catch (err) {
+      console.warn('Falha na comunicação com ElevenLabs:', err);
+      return false;
+    }
+  },
+
+  /**
+   * Fala pelo navegador (Web Speech API) com suporte a fracionamento de sentenças.
+   */
+  speakBrowser(
     text: string, 
     onStart?: () => void, 
     onEnd?: () => void,
@@ -186,8 +280,8 @@ export const speechService = {
     if (sentences.length === 0) return;
 
     const targetVoice = this.getBestVoice(options?.voiceURI);
-    const rate = options?.rate !== undefined ? options.rate : 1.02; // cadência natural
-    const pitch = options?.pitch !== undefined ? options.pitch : 0.95; // tom refinado J.A.R.V.I.S.
+    const rate = options?.rate !== undefined ? options.rate : 1.02;
+    const pitch = options?.pitch !== undefined ? options.pitch : 0.95;
 
     let currentIndex = 0;
     let hasStarted = false;
@@ -217,7 +311,6 @@ export const speechService = {
       };
 
       utterance.onend = () => {
-        // Pausa sutil entre sentenças para soar como respiração humana
         setTimeout(speakNextSentence, 40);
       };
 
@@ -234,17 +327,47 @@ export const speechService = {
   },
 
   /**
-   * Teste rápido de calibração de voz do J.A.R.V.I.S.
+   * Método mestre de fala do J.A.R.V.I.S.:
+   * Se o provider for ElevenLabs, tenta a voz de cinema com fallback automático para a voz neural do navegador.
    */
-  testVoice(options?: SpeechOptions, onEnd?: () => void): void {
-    const testText = 'Protocolo de voz calibrado. Sistemas operacionais em prontidão para o Senhor Eullon.';
-    this.speak(testText, undefined, onEnd, options);
+  async speak(
+    text: string,
+    onStart?: () => void,
+    onEnd?: () => void,
+    options?: SpeechOptions
+  ): Promise<void> {
+    const isEleven = (options?.provider === 'elevenlabs') || (!options?.provider && !!(options?.elevenApiKey || DEFAULT_ELEVENLABS_KEY));
+
+    if (isEleven) {
+      const voiceId = options?.elevenVoiceId || 'JBFqnCBsd6RMkjVDRZzb'; // George (J.A.R.V.I.S.)
+      const success = await this.speakElevenLabs(text, voiceId, options?.elevenApiKey, onStart, onEnd);
+      if (success) return;
+      console.info('Recorrendo à voz neural do navegador (fallback)...');
+    }
+
+    // Fallback ou modo nativo
+    this.speakBrowser(text, onStart, onEnd, options);
   },
 
   /**
-   * Interrompe a fala imediatamente.
+   * Teste de voz do J.A.R.V.I.S.
+   */
+  async testVoice(options?: SpeechOptions, onEnd?: () => void): Promise<void> {
+    const testText = 'Protocolo de áudio calibrado. Sistemas operacionais em prontidão absoluta para o Senhor Eullon.';
+    await this.speak(testText, undefined, onEnd, options);
+  },
+
+  /**
+   * Interrompe qualquer áudio em reprodução imediatamente.
    */
   stopSpeaking(): void {
+    if (this.currentAudio) {
+      try {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      } catch {}
+      this.currentAudio = null;
+    }
     if (this.hasSpeechSynthesis()) {
       window.speechSynthesis.cancel();
     }

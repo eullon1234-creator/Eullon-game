@@ -43,6 +43,9 @@ export interface AppSettings {
   jarvisVoiceURI?: string;
   jarvisVoiceRate?: number;
   jarvisVoicePitch?: number;
+  voiceProvider?: 'browser' | 'elevenlabs';
+  elevenLabsApiKey?: string;
+  elevenLabsVoiceId?: string;
 }
 
 export type SortOption = 

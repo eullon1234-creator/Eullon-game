@@ -7,7 +7,7 @@ import {
 import { useGame } from '../../context/GameContext';
 import { useToast } from '../../context/ToastContext';
 import { groqService, ChatMessage, JarvisAction } from '../../services/groqService';
-import { speechService, VoiceOption } from '../../services/speechService';
+import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../../services/speechService';
 import { ArcReactor } from '../common/ArcReactor';
 import { CURATED_GAMES } from '../../data/curatedGames';
 
@@ -197,7 +197,10 @@ export const AIAssistantModal: React.FC = () => {
           () => setIsSpeaking(true),
           () => setIsSpeaking(false),
           {
+            provider: settings.voiceProvider || 'elevenlabs',
             voiceURI: settings.jarvisVoiceURI,
+            elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+            elevenApiKey: settings.elevenLabsApiKey,
             rate: settings.jarvisVoiceRate,
             pitch: settings.jarvisVoicePitch,
           }
@@ -213,7 +216,10 @@ export const AIAssistantModal: React.FC = () => {
           () => setIsSpeaking(true),
           () => setIsSpeaking(false),
           {
+            provider: settings.voiceProvider || 'elevenlabs',
             voiceURI: settings.jarvisVoiceURI,
+            elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+            elevenApiKey: settings.elevenLabsApiKey,
             rate: settings.jarvisVoiceRate,
             pitch: settings.jarvisVoicePitch,
           }
@@ -272,7 +278,10 @@ export const AIAssistantModal: React.FC = () => {
         undefined,
         undefined,
         {
+          provider: settings.voiceProvider || 'elevenlabs',
           voiceURI: settings.jarvisVoiceURI,
+          elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+          elevenApiKey: settings.elevenLabsApiKey,
           rate: settings.jarvisVoiceRate,
           pitch: settings.jarvisVoicePitch,
         }
@@ -285,7 +294,10 @@ export const AIAssistantModal: React.FC = () => {
     setTestingVoice(true);
     speechService.testVoice(
       {
+        provider: settings.voiceProvider || 'elevenlabs',
         voiceURI: settings.jarvisVoiceURI,
+        elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+        elevenApiKey: settings.elevenLabsApiKey,
         rate: settings.jarvisVoiceRate,
         pitch: settings.jarvisVoicePitch,
       },
@@ -402,7 +414,7 @@ export const AIAssistantModal: React.FC = () => {
             <div className="flex items-center justify-between">
               <span className="font-mono text-cyan-400 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Calibração de Voz Neural do J.A.R.V.I.S.</span>
+                <span>Calibração de Voz do J.A.R.V.I.S.</span>
               </span>
               <button
                 type="button"
@@ -413,95 +425,150 @@ export const AIAssistantModal: React.FC = () => {
               </button>
             </div>
 
-            {/* Seletor de Voz */}
-            <div className="space-y-1.5">
-              <label className="text-slate-300 font-semibold block text-[11px]">
-                Voz Neural Detectada no Navegador:
-              </label>
-              <select
-                value={settings.jarvisVoiceURI || ''}
-                onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl bg-gamer-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+            {/* Alternador de Motor de Voz (ElevenLabs vs Navegador) */}
+            <div className="flex items-center gap-2 p-1 bg-gamer-900/90 rounded-2xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => updateSettings({ voiceProvider: 'elevenlabs' })}
+                className={`flex-1 py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  settings.voiceProvider !== 'browser'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-gamer-950 shadow-glow-cyan font-black'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                {availableVoices.length === 0 ? (
-                  <option value="">Voz padrão do sistema</option>
-                ) : (
-                  availableVoices.map((item, idx) => (
-                    <option key={idx} value={item.voice.voiceURI}>
-                      {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
-                    </option>
-                  ))
-                )}
-              </select>
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>ElevenLabs (Cinema ⭐)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => updateSettings({ voiceProvider: 'browser' })}
+                className={`flex-1 py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                  settings.voiceProvider === 'browser'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-glow-cyan'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>🌐 Navegador Neural</span>
+              </button>
             </div>
 
-            {/* Presets de Velocidade e Timbre */}
-            <div className="grid grid-cols-2 gap-3 pt-1">
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold block text-[11px]">
-                  Cadência / Velocidade:
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {[
-                    { label: 'Ponderado', val: 0.92 },
-                    { label: 'Padrão', val: 1.02 },
-                    { label: 'Ágil', val: 1.15 },
-                  ].map((preset) => {
-                    const currentRate = settings.jarvisVoiceRate !== undefined ? settings.jarvisVoiceRate : 1.02;
-                    const isSelected = Math.abs(currentRate - preset.val) < 0.05;
-                    return (
-                      <button
-                        key={preset.val}
-                        type="button"
-                        onClick={() => updateSettings({ jarvisVoiceRate: preset.val })}
-                        className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
-                          isSelected
-                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
-                            : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    );
-                  })}
+            {settings.voiceProvider !== 'browser' ? (
+              /* Configuração do ElevenLabs */
+              <div className="space-y-2.5 animate-fadeIn">
+                <div className="space-y-1.5">
+                  <label className="text-slate-300 font-semibold block text-[11px]">
+                    Voz de Estúdio do J.A.R.V.I.S. (ElevenLabs):
+                  </label>
+                  <select
+                    value={settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb'}
+                    onChange={(e) => updateSettings({ elevenLabsVoiceId: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-gamer-900 border border-cyan-500/40 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+                  >
+                    {ELEVENLABS_VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                <p className="text-[11px] text-slate-400">
+                  ⚡ Conectado à sua conta ElevenLabs (10.000 caracteres mensais gratuitos com voz real de Hollywood).
+                </p>
               </div>
+            ) : (
+              /* Configuração do Navegador */
+              <div className="space-y-3 animate-fadeIn">
+                <div className="space-y-1.5">
+                  <label className="text-slate-300 font-semibold block text-[11px]">
+                    Voz Neural Detectada no Navegador:
+                  </label>
+                  <select
+                    value={settings.jarvisVoiceURI || ''}
+                    onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-gamer-900 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+                  >
+                    {availableVoices.length === 0 ? (
+                      <option value="">Voz padrão do sistema</option>
+                    ) : (
+                      availableVoices.map((item, idx) => (
+                        <option key={idx} value={item.voice.voiceURI}>
+                          {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
 
-              <div className="space-y-1">
-                <label className="text-slate-300 font-semibold block text-[11px]">
-                  Timbre do J.A.R.V.I.S.:
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {[
-                    { label: 'Grave Stark', val: 0.90 },
-                    { label: 'Natural', val: 0.98 },
-                    { label: 'Claro', val: 1.05 },
-                  ].map((preset) => {
-                    const currentPitch = settings.jarvisVoicePitch !== undefined ? settings.jarvisVoicePitch : 0.95;
-                    const isSelected = Math.abs(currentPitch - preset.val) < 0.05;
-                    return (
-                      <button
-                        key={preset.val}
-                        type="button"
-                        onClick={() => updateSettings({ jarvisVoicePitch: preset.val })}
-                        className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
-                          isSelected
-                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
-                            : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    );
-                  })}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-semibold block text-[11px]">
+                      Cadência / Velocidade:
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { label: 'Ponderado', val: 0.92 },
+                        { label: 'Padrão', val: 1.02 },
+                        { label: 'Ágil', val: 1.15 },
+                      ].map((preset) => {
+                        const currentRate = settings.jarvisVoiceRate !== undefined ? settings.jarvisVoiceRate : 1.02;
+                        const isSelected = Math.abs(currentRate - preset.val) < 0.05;
+                        return (
+                          <button
+                            key={preset.val}
+                            type="button"
+                            onClick={() => updateSettings({ jarvisVoiceRate: preset.val })}
+                            className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                              isSelected
+                                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
+                                : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-slate-300 font-semibold block text-[11px]">
+                      Timbre do J.A.R.V.I.S.:
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      {[
+                        { label: 'Grave Stark', val: 0.90 },
+                        { label: 'Natural', val: 0.98 },
+                        { label: 'Claro', val: 1.05 },
+                      ].map((preset) => {
+                        const currentPitch = settings.jarvisVoicePitch !== undefined ? settings.jarvisVoicePitch : 0.95;
+                        const isSelected = Math.abs(currentPitch - preset.val) < 0.05;
+                        return (
+                          <button
+                            key={preset.val}
+                            type="button"
+                            onClick={() => updateSettings({ jarvisVoicePitch: preset.val })}
+                            className={`flex-1 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                              isSelected
+                                ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
+                                : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Botão de Teste */}
-            <div className="pt-1 flex items-center justify-between">
+            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
               <p className="text-[10px] text-slate-400">
-                💡 Vozes marcadas com <strong className="text-cyan-300">⭐ [NEURAL]</strong> utilizam redes neurais humanas.
+                {settings.voiceProvider !== 'browser'
+                  ? '🎙️ Reproduzindo via síntese neural ElevenLabs em alta definição.'
+                  : '💡 Vozes neurais locais com zero consumo de dados.'}
               </p>
               <button
                 type="button"

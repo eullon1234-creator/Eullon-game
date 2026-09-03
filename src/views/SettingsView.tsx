@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
-import { speechService, VoiceOption } from '../services/speechService';
+import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../services/speechService';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -67,7 +67,10 @@ export const SettingsView: React.FC = () => {
     setTestingVoiceSettings(true);
     speechService.testVoice(
       {
+        provider: settings.voiceProvider || 'elevenlabs',
         voiceURI: settings.jarvisVoiceURI,
+        elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+        elevenApiKey: settings.elevenLabsApiKey,
         rate: settings.jarvisVoiceRate,
         pitch: settings.jarvisVoicePitch,
       },
@@ -424,44 +427,136 @@ export const SettingsView: React.FC = () => {
           </p>
         </div>
 
-        {/* Calibração de Voz do J.A.R.V.I.S. */}
-        <div className="pt-4 border-t border-slate-800 space-y-3">
-          <div className="flex items-center justify-between">
+        {/* Calibração de Voz do J.A.R.V.I.S. (ElevenLabs & Navegador) */}
+        <div className="pt-4 border-t border-slate-800 space-y-3.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <label className="font-bold text-slate-300 flex items-center gap-1.5 text-xs">
               <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Voz Neural do J.A.R.V.I.S. (Web Speech API)</span>
+              <span>Voz do J.A.R.V.I.S. (Síntese Neural)</span>
             </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={testingVoiceSettings}
+                onClick={handleTestVoiceSettings}
+                className="px-3 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-bold text-xs flex items-center gap-1.5 shadow-glow-cyan transition-all"
+              >
+                <Play className="w-3 h-3 fill-current" />
+                <span>{testingVoiceSettings ? 'Falando...' : 'Testar Voz'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Motor de Voz: ElevenLabs vs Navegador */}
+          <div className="flex items-center gap-2 p-1 bg-gamer-800/90 rounded-2xl border border-slate-700">
             <button
               type="button"
-              disabled={testingVoiceSettings}
-              onClick={handleTestVoiceSettings}
-              className="px-3 py-1 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-300 font-bold text-xs flex items-center gap-1.5 shadow-glow-cyan transition-all"
+              onClick={() => updateSettings({ voiceProvider: 'elevenlabs' })}
+              className={`flex-1 py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                settings.voiceProvider !== 'browser'
+                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-gamer-950 shadow-glow-cyan font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
             >
-              <Play className="w-3 h-3 fill-current" />
-              <span>{testingVoiceSettings ? 'Falando...' : 'Testar Voz'}</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>ElevenLabs (Cinema ⭐)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => updateSettings({ voiceProvider: 'browser' })}
+              className={`flex-1 py-1.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                settings.voiceProvider === 'browser'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-glow-cyan'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>🌐 Navegador Neural</span>
             </button>
           </div>
 
-          <div className="space-y-2">
-            <select
-              value={settings.jarvisVoiceURI || ''}
-              onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400"
-            >
-              {settingsVoiceList.length === 0 ? (
-                <option value="">Voz padrão do sistema operacional</option>
-              ) : (
-                settingsVoiceList.map((item, idx) => (
-                  <option key={idx} value={item.voice.voiceURI}>
-                    {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
-                  </option>
-                ))
-              )}
-            </select>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Dica: Vozes com <strong className="text-cyan-300">⭐ [NEURAL]</strong> (como <em>Microsoft Antonio Online Natural</em> no Edge ou <em>Google português</em> no Chrome) possuem entonação humana ultra-realista gerada por inteligência artificial.
-            </p>
-          </div>
+          {settings.voiceProvider !== 'browser' ? (
+            <div className="space-y-3 animate-fadeIn">
+              <div className="space-y-1.5">
+                <label className="text-slate-300 font-semibold block text-[11px]">
+                  Voz de Estúdio (ElevenLabs):
+                </label>
+                <select
+                  value={settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb'}
+                  onChange={(e) => updateSettings({ elevenLabsVoiceId: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-gamer-800 border border-cyan-500/40 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+                >
+                  {ELEVENLABS_VOICES.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <label className="text-slate-300 font-semibold">
+                    Chave de API do ElevenLabs:
+                  </label>
+                  <a
+                    href="https://elevenlabs.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:underline flex items-center gap-1 text-[10px]"
+                  >
+                    <span>Painel ElevenLabs (10k Caracteres Grátis)</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Chave padrão já configurada e ativa..."
+                    value={settings.elevenLabsApiKey || ''}
+                    onChange={(e) => updateSettings({ elevenLabsApiKey: e.target.value })}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 text-xs font-mono"
+                  />
+                  {settings.elevenLabsApiKey && (
+                    <button
+                      type="button"
+                      onClick={() => updateSettings({ elevenLabsApiKey: undefined })}
+                      className="px-3 py-2 rounded-xl bg-gamer-800 hover:bg-rose-900/30 text-slate-400 hover:text-rose-300 text-xs font-bold border border-slate-700 transition-colors"
+                      title="Restaurar chave padrão fornecida"
+                    >
+                      Restaurar Padrão
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Sua chave do ElevenLabs está ativa! O J.A.R.V.I.S. utilizará a voz de estúdio de cinema com entonação humana e respiração realista. Se seus caracteres mensais se esgotarem, o app reverterá automaticamente para a voz neural do navegador.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 animate-fadeIn">
+              <label className="text-slate-300 font-semibold block text-[11px]">
+                Voz Neural Detectada no Navegador:
+              </label>
+              <select
+                value={settings.jarvisVoiceURI || ''}
+                onChange={(e) => updateSettings({ jarvisVoiceURI: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-gamer-800 border border-slate-700 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
+              >
+                {settingsVoiceList.length === 0 ? (
+                  <option value="">Voz padrão do sistema operacional</option>
+                ) : (
+                  settingsVoiceList.map((item, idx) => (
+                    <option key={idx} value={item.voice.voiceURI}>
+                      {item.isNeural ? '⭐ [NEURAL] ' : ''}{item.name} ({item.lang})
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Dica: Vozes com <strong className="text-cyan-300">⭐ [NEURAL]</strong> (como <em>Microsoft Antonio Online Natural</em> ou <em>Google português</em>) possuem entonação humana ultra-realista gerada por inteligência artificial local.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
