@@ -3,13 +3,14 @@ import {
   Moon, Sun, Download, Upload, Trash2, RotateCcw, 
   Database, LayoutGrid, List, Check, AlertTriangle, FileText, CheckCircle2, Cloud, RefreshCw,
   Image as ImageIcon, Sparkles, Key, ExternalLink, Bot, Zap, Volume2, SlidersHorizontal, Play,
-  ArrowUpCircle, Smartphone, Monitor
+  ArrowUpCircle, Smartphone, Monitor, HardDrive
 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
 import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../services/speechService';
 import { updateService, CURRENT_APP_VERSION, UpdateInfo } from '../services/updateService';
 import { UpdateModal } from '../components/modals/UpdateModal';
+import { imageCacheService, CacheStats } from '../services/imageCacheService';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -100,6 +101,61 @@ export const SettingsView: React.FC = () => {
       },
       () => setTestingVoiceSettings(false)
     );
+  };
+
+  // Estado do Cache Local de Capas
+  const [cacheStats, setCacheStats] = useState<CacheStats>({ count: 0, estimatedSizeMb: '0.0' });
+  const [isPreloadingCovers, setIsPreloadingCovers] = useState(false);
+  const [preloadProgress, setPreloadProgress] = useState({ current: 0, total: 0 });
+  const [preloadFeedback, setPreloadFeedback] = useState<string | null>(null);
+
+  const refreshCacheStats = async () => {
+    try {
+      const stats = await imageCacheService.getCacheStats();
+      setCacheStats(stats);
+    } catch {
+      // ignore
+    }
+  };
+
+  React.useEffect(() => {
+    refreshCacheStats();
+  }, []);
+
+  const handlePreloadLibraryCovers = async () => {
+    if (isPreloadingCovers) return;
+    const urls = games.map((g) => g.coverUrl).filter((url): url is string => Boolean(url && url.trim()));
+    if (urls.length === 0) {
+      setPreloadFeedback('Nenhum jogo na biblioteca possui capa para baixar.');
+      return;
+    }
+
+    setIsPreloadingCovers(true);
+    setPreloadFeedback(null);
+    setPreloadProgress({ current: 0, total: urls.length });
+
+    try {
+      const result = await imageCacheService.preloadCovers(urls, (curr, tot) => {
+        setPreloadProgress({ current: curr, total: tot });
+      });
+      await refreshCacheStats();
+      setPreloadFeedback(`Download concluído! ${result.success} capa(s) salvas no celular com sucesso.`);
+    } catch (err: any) {
+      setPreloadFeedback(`Erro ao salvar capas: ${err.message}`);
+    } finally {
+      setIsPreloadingCovers(false);
+    }
+  };
+
+  const handleClearCoverCache = async () => {
+    if (!window.confirm('Tem certeza que deseja limpar o cache de capas do dispositivo? As imagens serão baixadas novamente conforme forem visualizadas.')) {
+      return;
+    }
+    const success = await imageCacheService.clearCache();
+    if (success) {
+      await refreshCacheStats();
+      setPreloadFeedback('Cache de capas limpo com sucesso.');
+    }
   };
 
   const jsonInputRef = useRef<HTMLInputElement>(null);
@@ -752,7 +808,92 @@ export const SettingsView: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Manutenção e Restauração */}
+      {/* 4. Armazenamento Local & Capas Offline */}
+      <section className="p-6 rounded-3xl bg-gamer-900/80 border border-slate-800 shadow-card space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <HardDrive className="w-4 h-4 text-neon-cyan" />
+            Armazenamento Local & Capas Offline
+          </h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">
+              <strong className="text-white">{cacheStats.count}</strong> capas salvas (~{cacheStats.estimatedSizeMb} MB)
+            </span>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-400 leading-relaxed">
+          As capas dos jogos são salvas permanentemente no armazenamento interno do seu aparelho assim que você as visualiza, permitindo carregamento instantâneo (0s) e funcionamento 100% offline mesmo sem internet.
+        </p>
+
+        {isPreloadingCovers && (
+          <div className="p-4 rounded-2xl bg-gamer-850/80 border border-neon-cyan/30 space-y-2 animate-fadeIn">
+            <div className="flex justify-between text-xs text-slate-300 font-semibold">
+              <span>Baixando capas para a memória do celular...</span>
+              <span>{preloadProgress.current} de {preloadProgress.total}</span>
+            </div>
+            <div className="w-full h-2 bg-gamer-950 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-neon-cyan to-blue-500 transition-all duration-300"
+                style={{ width: `${preloadProgress.total > 0 ? (preloadProgress.current / preloadProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {preloadFeedback && (
+          <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300 flex items-center gap-2 animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{preloadFeedback}</span>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-gamer-850/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                <Download className="w-4 h-4 text-neon-cyan" />
+                Baixar Capas da Biblioteca
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Baixa de uma só vez as capas de todos os jogos da sua biblioteca para garantir que fiquem disponíveis sem precisar de internet.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handlePreloadLibraryCovers}
+              disabled={isPreloadingCovers || games.length === 0}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 text-xs font-bold shadow-glow-cyan hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>{isPreloadingCovers ? 'Baixando...' : 'Salvar Todas as Capas no Celular'}</span>
+            </button>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-gamer-850/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <h3 className="text-xs font-bold text-white flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-rose-400" />
+                Limpar Cache de Imagens
+              </h3>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Libera o espaço de armazenamento ocupado pelas capas no disco do aparelho.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleClearCoverCache}
+              disabled={cacheStats.count === 0}
+              className="w-full py-2.5 px-3 rounded-xl bg-gamer-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800 text-xs font-bold disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Limpar Cache ({cacheStats.estimatedSizeMb} MB)</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Manutenção e Restauração */}
       <section className="p-6 rounded-3xl bg-gamer-900/80 border border-slate-800 shadow-card space-y-6">
         <h2 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
           <AlertTriangle className="w-4 h-4 text-amber-400" />

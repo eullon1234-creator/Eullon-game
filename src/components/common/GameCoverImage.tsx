@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gamepad2, ImageOff } from 'lucide-react';
 import { gameCoverService } from '../../services/gameCoverService';
+import { imageCacheService } from '../../services/imageCacheService';
 
 interface GameCoverImageProps {
   src?: string;
@@ -15,20 +16,53 @@ export const GameCoverImage: React.FC<GameCoverImageProps> = ({
   className = '',
   aspectRatioClass = 'aspect-[3/4]',
 }) => {
-  const [loaded, setLoaded] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState<string | undefined>(src);
+  const [loaded, setLoaded] = useState(() => {
+    // Se já tivermos o blob em memória, já começa como pronto
+    const memory = imageCacheService.getMemoryUrl(src);
+    return Boolean(memory);
+  });
+  const [currentSrc, setCurrentSrc] = useState<string | undefined>(() => {
+    return imageCacheService.getMemoryUrl(src) || src;
+  });
   const [hasTriedProxy, setHasTriedProxy] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    setCurrentSrc(src);
-    setLoaded(false);
+    let isMounted = true;
     setError(false);
     setHasTriedProxy(false);
+
+    if (!src) {
+      setCurrentSrc(undefined);
+      setLoaded(false);
+      return;
+    }
+
+    const memoryUrl = imageCacheService.getMemoryUrl(src);
+    if (memoryUrl) {
+      setCurrentSrc(memoryUrl);
+      setLoaded(true);
+      return;
+    }
+
+    // Se não está em memória, define a src original enquanto busca do cache local
+    setCurrentSrc(src);
+
+    imageCacheService.getCachedCoverUrl(src).then((resolvedUrl) => {
+      if (isMounted && resolvedUrl) {
+        setCurrentSrc(resolvedUrl);
+      }
+    }).catch(() => {
+      // Falha silenciosa, usa a URL remota original
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [src]);
 
   const handleError = () => {
-    if (!hasTriedProxy && currentSrc && !currentSrc.includes('weserv.nl')) {
+    if (!hasTriedProxy && currentSrc && !currentSrc.includes('weserv.nl') && !currentSrc.startsWith('blob:')) {
       // Tenta recuperar a imagem através do proxy otimizado
       setHasTriedProxy(true);
       setCurrentSrc(gameCoverService.getResilientImageUrl(currentSrc));
