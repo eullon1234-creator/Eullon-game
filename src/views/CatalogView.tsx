@@ -30,17 +30,42 @@ export const CatalogView: React.FC = () => {
     return map;
   }, [games]);
 
-  // Filtra os jogos pela categoria, busca, duração estimada e ordenação
+  // Função para normalizar texto removendo acentos e pontuação
+  const normalizeText = (text: string) => {
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
+
+  // Filtra os jogos pela categoria, busca com normalização e ordenação inteligente por relevância
   const filteredGames = useMemo(() => {
+    const rawQuery = searchQuery.trim();
+    const q = normalizeText(rawQuery);
+
     return CURATED_GAMES.filter((game) => {
       const matchCategory = selectedCategory === 'all' || 
         (Array.isArray(game.category) ? game.category.includes(selectedCategory) : game.category === selectedCategory);
-      const matchSearch = !searchQuery.trim() || 
-        game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        game.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        game.platform.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (!matchCategory || !matchSearch) return false;
+      if (!q) {
+        if (!matchCategory) return false;
+      } else {
+        const titleNorm = normalizeText(game.title);
+        const descNorm = normalizeText(game.description || '');
+        const platNorm = normalizeText(game.platform || '');
+        const catMatches = Array.isArray(game.category) 
+          ? game.category.some(c => normalizeText(c).includes(q))
+          : typeof game.category === 'string' && normalizeText(game.category).includes(q);
+
+        const matchSearch = titleNorm.includes(q) ||
+          descNorm.includes(q) ||
+          platNorm.includes(q) ||
+          catMatches;
+
+        if (!matchSearch) return false;
+        if (!matchCategory) return false;
+      }
 
       // Filtro de duração (HowLongToBeat)
       if (durationFilter !== 'all') {
@@ -53,6 +78,26 @@ export const CatalogView: React.FC = () => {
 
       return true;
     }).sort((a, b) => {
+      // 1. Se houver busca ativa, a RELEVÂNCIA DO TÍTULO vem em PRIMEIRO lugar absoluto!
+      if (q) {
+        const getScore = (g: CuratedGame) => {
+          const t = normalizeText(g.title);
+          if (t === q) return 1000; // Título exato
+          if (t.startsWith(q)) return 800; // Título começa com o termo (ex: "Naruto: Ultimate Ninja...")
+          if (t.includes(` ${q}`) || t.includes(`:${q}`) || t.includes(`- ${q}`)) return 600; // Palavra exata no título
+          if (t.includes(q)) return 400; // Substring no título
+          const catMatch = Array.isArray(g.category) && g.category.some(c => normalizeText(c).includes(q));
+          if (catMatch) return 200; // Categoria
+          return 50; // Descrição
+        };
+
+        const scoreA = getScore(a);
+        const scoreB = getScore(b);
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA; // Mais relevante SEMPRE no topo!
+        }
+      }
+
       const getHours = (g: CuratedGame) => g.timeToBeat?.main || timeToBeatService.getTimeToBeat(g.title, g.category).main || 15;
 
       switch (catalogSort) {
@@ -257,22 +302,68 @@ export const CatalogView: React.FC = () => {
 
       {/* 2. Barra de Busca e Categorias */}
       <div className="space-y-3">
-        {/* Barra de Busca rápida */}
-        <div className="relative max-w-md">
-          <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 ${
-            isDeathNote ? 'text-death-crimson' : 'text-neon-cyan'
-          }`} />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou tema dentro do catálogo..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full pl-10 pr-4 py-2 rounded-xl border text-xs text-white placeholder-slate-500 focus:outline-none ${
-              isDeathNote
-                ? 'bg-death-900 border-red-950/80 focus:border-death-crimson'
-                : 'bg-gamer-900 border-slate-800 focus:border-neon-cyan'
-            }`}
-          />
+        {/* Barra de Busca rápida com botão limpar e contador */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              (document.activeElement as HTMLElement)?.blur();
+            }}
+            className="relative max-w-md w-full"
+          >
+            <Search className={`w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none ${
+              isDeathNote ? 'text-death-crimson' : 'text-neon-cyan'
+            }`} />
+            <input
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
+              placeholder="Buscar por nome ou tema dentro do catálogo..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onInput={(e) => setSearchQuery((e.target as HTMLInputElement).value)}
+              className={`w-full pl-10 pr-10 py-2.5 rounded-xl border text-xs text-white placeholder-slate-500 focus:outline-none transition-all shadow-inner ${
+                isDeathNote
+                  ? 'bg-death-900 border-red-950/80 focus:border-death-crimson'
+                  : 'bg-gamer-900 border-slate-800 focus:border-neon-cyan'
+              }`}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                title="Limpar busca"
+              >
+                ✕
+              </button>
+            )}
+          </form>
+
+          {searchQuery.trim() && (
+            <div className="flex items-center gap-2 text-xs animate-fadeIn">
+              <span className={`font-bold px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                isDeathNote 
+                  ? 'bg-death-crimson/15 text-death-crimson border-death-crimson/30' 
+                  : 'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/30'
+              }`}>
+                <span>{filteredGames.length} jogo(s)</span>
+                <span className="text-slate-400 font-normal">para</span>
+                <span>"{searchQuery.trim()}"</span>
+              </span>
+              {selectedCategory !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory('all')}
+                  className="text-[11px] text-slate-400 hover:text-white underline cursor-pointer"
+                >
+                  Buscar em todas as categorias
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Pílulas de Categorias */}

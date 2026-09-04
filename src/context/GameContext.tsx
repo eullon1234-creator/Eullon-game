@@ -341,13 +341,27 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setFilters(DEFAULT_FILTERS);
   }, []);
 
+  const normalizeText = (text: string) => {
+    return (text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
+
   const filteredGames = useMemo(() => {
+    const rawSearch = filters.search.trim();
+    const q = normalizeText(rawSearch);
+
     return games.filter((game) => {
-      if (filters.search.trim()) {
-        const s = filters.search.toLowerCase();
-        const matchTitle = game.title.toLowerCase().includes(s);
-        const matchPlatform = game.platform.toLowerCase().includes(s);
-        if (!matchTitle && !matchPlatform) return false;
+      if (q) {
+        const titleNorm = normalizeText(game.title);
+        const platformNorm = normalizeText(game.platform);
+        const notesNorm = normalizeText(game.notes || '');
+        const matchTitle = titleNorm.includes(q);
+        const matchPlatform = platformNorm.includes(q);
+        const matchNotes = notesNorm.includes(q);
+        if (!matchTitle && !matchPlatform && !matchNotes) return false;
       }
 
       if (filters.status !== 'all' && game.status !== filters.status) return false;
@@ -365,6 +379,26 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return true;
     }).sort((a, b) => {
+      // Prioridade máxima de ordenação por relevância quando há busca
+      if (q) {
+        const getScore = (g: Game) => {
+          const t = normalizeText(g.title);
+          if (t === q) return 1000;
+          if (t.startsWith(q)) return 800;
+          if (t.includes(` ${q}`) || t.includes(`:${q}`) || t.includes(`- ${q}`)) return 600;
+          if (t.includes(q)) return 400;
+          const p = normalizeText(g.platform);
+          if (p.includes(q)) return 200;
+          return 50;
+        };
+
+        const scoreA = getScore(a);
+        const scoreB = getScore(b);
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA;
+        }
+      }
+
       switch (filters.sortBy) {
         case 'name_asc':
           return a.title.localeCompare(b.title);

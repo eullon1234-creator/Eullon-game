@@ -43,14 +43,33 @@ export const GlobalSearchModal: React.FC = () => {
     setIsSearchModalOpen(false);
   };
 
-  const results = query.trim().length > 0
-    ? games.filter((g) => {
-        const q = query.toLowerCase();
-        return (
-          g.title.toLowerCase().includes(q) ||
-          g.platform.toLowerCase().includes(q)
-        );
-      })
+  const normalizeText = (text: string) => {
+    return (text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  };
+
+  const q = normalizeText(query);
+  const results = q.length > 0
+    ? games
+        .filter((g) => {
+          const t = normalizeText(g.title);
+          const p = normalizeText(g.platform);
+          return t.includes(q) || p.includes(q);
+        })
+        .sort((a, b) => {
+          const getScore = (g: (typeof games)[0]) => {
+            const t = normalizeText(g.title);
+            if (t === q) return 1000;
+            if (t.startsWith(q)) return 800;
+            if (t.includes(` ${q}`) || t.includes(`:${q}`) || t.includes(`- ${q}`)) return 600;
+            if (t.includes(q)) return 400;
+            return 100;
+          };
+          return getScore(b) - getScore(a);
+        })
     : [];
 
   const handleSelectGame = (game: (typeof games)[0]) => {
@@ -70,10 +89,15 @@ export const GlobalSearchModal: React.FC = () => {
           <Search className="w-5 h-5 text-neon-cyan flex-shrink-0 mr-3" />
           <input
             ref={inputRef}
-            type="text"
+            type="search"
+            enterKeyHint="search"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck="false"
             placeholder="Pesquisar por nome do jogo ou plataforma..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
             className="w-full bg-transparent text-white placeholder-slate-500 text-sm sm:text-base focus:outline-none"
           />
           {query ? (

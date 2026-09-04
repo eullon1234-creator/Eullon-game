@@ -118,18 +118,25 @@ export const LibraryView: React.FC = () => {
         {/* Search input & Filters Drawer button */}
         <div className="flex items-center gap-2 flex-1 lg:max-w-md">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
-              type="text"
+              type="search"
+              enterKeyHint="search"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
               placeholder="Buscar por nome ou plataforma..."
               value={filters.search}
               onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+              onInput={(e) => setFilters((prev) => ({ ...prev, search: (e.target as HTMLInputElement).value }))}
               className="w-full pl-9 pr-8 py-2 rounded-xl bg-gamer-900 border border-slate-800 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-neon-cyan"
             />
             {filters.search && (
               <button
+                type="button"
                 onClick={() => setFilters((prev) => ({ ...prev, search: '' }))}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                title="Limpar busca"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
