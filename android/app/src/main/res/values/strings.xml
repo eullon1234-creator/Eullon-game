@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Eullon Game</string>
-    <string name="title_activity_main">Eullon Game</string>
+    <string name="app_name">Eullon Games</string>
+    <string name="title_activity_main">Eullon Games</string>
     <string name="package_name">com.eullon.game</string>
     <string name="custom_url_scheme">com.eullon.game</string>
 </resources>

@@ -54,10 +54,16 @@ export const Navbar: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-neon-cyan via-blue-600 to-purple-600 p-0.5 shadow-glow-cyan group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
-              <div className="w-full h-full bg-gamer-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-neon-cyan">
-                <Gamepad2 className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform duration-300" />
-              </div>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-neon-cyan via-blue-600 to-purple-600 p-0.5 shadow-glow-cyan group-hover:scale-105 transition-transform duration-300 flex-shrink-0 overflow-hidden">
+              <img 
+                src="./avatar.png" 
+                alt="Eullon Games" 
+                className="w-full h-full object-cover rounded-[10px] sm:rounded-[14px]"
+                onError={(e) => {
+                  // Fallback para Gamepad se imagem não carregar
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
             </div>
           )}
 
@@ -66,7 +72,7 @@ export const Navbar: React.FC = () => {
               <span className={`font-black text-xs sm:text-lg tracking-tight text-white transition-colors truncate ${
                 isDeathNote ? 'font-deathnote text-base sm:text-2xl group-hover:text-death-crimson' : 'group-hover:text-neon-cyan'
               }`}>
-                {isDeathNote ? 'DEATH NOTE' : 'EULLON GAME'}
+                {isDeathNote ? 'DEATH NOTE' : 'EULLON GAMES'}
               </span>
               <span className={`text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider hidden xs:inline-flex ${
                 isDeathNote 
@@ -77,7 +83,7 @@ export const Navbar: React.FC = () => {
               </span>
             </div>
             <p className={`text-[10px] -mt-1 hidden sm:block ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
-              {isDeathNote ? 'Caderno de Registro de Jogos' : 'Minha Biblioteca Pessoal'}
+              {isDeathNote ? 'Caderno de Registro de Jogos' : 'Meus Jogos Zerados'}
             </p>
           </div>
         </div>

@@ -1,7 +1,7 @@
 {
   "name": "eullon-game",
   "private": true,
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Game Tracker Pro - Gerenciador Pessoal de Jogos",
   "author": "Eullon",
   "type": "module",
