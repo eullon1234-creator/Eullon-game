@@ -8,6 +8,7 @@ import {
 import { useGame } from '../context/GameContext';
 import { groqService, DEFAULT_GROQ_KEY } from '../services/groqService';
 import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../services/speechService';
+import { PERSONALITIES } from '../data/personalities';
 import { updateService, CURRENT_APP_VERSION, UpdateInfo } from '../services/updateService';
 import { UpdateModal } from '../components/modals/UpdateModal';
 import { imageCacheService, CacheStats } from '../services/imageCacheService';
@@ -94,7 +95,7 @@ export const SettingsView: React.FC = () => {
       {
         provider: settings.voiceProvider || 'elevenlabs',
         voiceURI: settings.jarvisVoiceURI,
-        elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+        elevenVoiceId: settings.customVoiceId?.trim() || settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
         elevenApiKey: settings.elevenLabsApiKey,
         rate: settings.jarvisVoiceRate,
         pitch: settings.jarvisVoicePitch,
@@ -507,12 +508,64 @@ export const SettingsView: React.FC = () => {
           </p>
         </div>
 
-        {/* Calibração de Voz do J.A.R.V.I.S. (ElevenLabs & Navegador) */}
+        {/* Seletor de Personalidade do Assistente (IA) */}
+        <div className="pt-4 border-t border-slate-800 space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="font-bold text-slate-300 flex items-center gap-1.5 text-xs">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Personalidade do Assistente de Voz</span>
+            </label>
+            <span className="text-[10px] text-slate-400 font-mono">
+              Adapta falas, sotaques e tom de comando
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {PERSONALITIES.map((p) => {
+              const currentP = settings.aiPersonality || 'jarvis';
+              const isSelected = p.id === currentP;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => updateSettings({ 
+                    aiPersonality: p.id,
+                    elevenLabsVoiceId: p.voicePreset 
+                  })}
+                  className={`p-3 rounded-2xl border text-left transition-all relative overflow-hidden flex items-start gap-2.5 ${
+                    isSelected
+                      ? `${p.accentBg} ${p.accentBorder} shadow-glow-cyan`
+                      : 'bg-gamer-800/80 border-slate-700/80 hover:bg-gamer-750 hover:border-slate-600'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-lg shrink-0 border ${p.accentBorder} ${p.accentBg}`}>
+                    <span>{p.emoji}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold ${isSelected ? p.accentText : 'text-white'}`}>
+                        {p.name}
+                      </span>
+                      <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/40 text-slate-400 border border-white/10">
+                        {p.tag}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-snug mt-0.5">
+                      {p.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Calibração de Voz (ElevenLabs & Navegador) */}
         <div className="pt-4 border-t border-slate-800 space-y-3.5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <label className="font-bold text-slate-300 flex items-center gap-1.5 text-xs">
               <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Voz do J.A.R.V.I.S. (Síntese Neural)</span>
+              <span>Voz e Síntese de Áudio (TTS)</span>
             </label>
             <div className="flex items-center gap-2">
               <button
@@ -558,7 +611,7 @@ export const SettingsView: React.FC = () => {
             <div className="space-y-3 animate-fadeIn">
               <div className="space-y-1.5">
                 <label className="text-slate-300 font-semibold block text-[11px]">
-                  Voz de Estúdio (ElevenLabs):
+                  Voz de Estúdio Padrão (ElevenLabs):
                 </label>
                 <select
                   value={settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb'}
@@ -571,6 +624,45 @@ export const SettingsView: React.FC = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Voice ID Personalizado (Para vozes clonadas: Lula, Bolsonaro, etc.) */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-gamer-800/90 border border-cyan-500/30">
+                <div className="flex items-center justify-between text-[11px]">
+                  <label className="text-cyan-300 font-bold flex items-center gap-1.5">
+                    <span>🎙️ Voice ID Personalizado (Voz Clonada):</span>
+                  </label>
+                  <a
+                    href="https://elevenlabs.io/app/voice-lab"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:underline flex items-center gap-1 text-[10px]"
+                  >
+                    <span>Pegar ID no ElevenLabs</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Cole aqui o Voice ID clonado do Lula, Bolsonaro, etc..."
+                    value={settings.customVoiceId || ''}
+                    onChange={(e) => updateSettings({ customVoiceId: e.target.value })}
+                    className="flex-1 px-3 py-2 rounded-xl bg-gamer-950 border border-slate-700 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-400"
+                  />
+                  {settings.customVoiceId && (
+                    <button
+                      type="button"
+                      onClick={() => updateSettings({ customVoiceId: undefined })}
+                      className="px-3 py-2 rounded-xl bg-rose-900/30 text-rose-300 text-xs border border-rose-800/50 hover:bg-rose-900/50"
+                    >
+                      Limpar
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-400 leading-relaxed">
+                  💡 Se você clonou uma voz famosa (ou a sua) no ElevenLabs, cole o Voice ID acima para o assistente falar com ela!
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -609,7 +701,7 @@ export const SettingsView: React.FC = () => {
                 </div>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Sua chave do ElevenLabs está ativa! O J.A.R.V.I.S. utilizará a voz de estúdio de cinema com entonação humana e respiração realista. Se seus caracteres mensais se esgotarem, o app reverterá automaticamente para a voz neural do navegador.
+                Sua chave do ElevenLabs está ativa! O assistente utilizará a voz de estúdio com entonação humana e respiração realista. Se seus caracteres mensais se esgotarem, o app reverterá automaticamente para a voz neural do navegador.
               </p>
             </div>
           ) : (

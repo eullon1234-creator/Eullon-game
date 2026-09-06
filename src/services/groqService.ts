@@ -1,5 +1,5 @@
 // src/services/groqService.ts
-import { Game } from '../types/game';
+import { Game, AIPersonality, SortOption, NavigationTab } from '../types/game';
 
 export const getDefaultGroqKey = (): string => {
   if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_GROQ_API_KEY) {
@@ -22,7 +22,14 @@ export type JarvisActionType =
   | 'TOGGLE_FAVORITE'
   | 'SET_THEME'
   | 'NAVIGATE'
-  | 'FILTER';
+  | 'FILTER'
+  | 'ADD_GAME'
+  | 'DELETE_GAME'
+  | 'UPDATE_GAME'
+  | 'OPEN_GAME_DETAIL'
+  | 'OPEN_MODAL'
+  | 'SYNC_CLOUD'
+  | 'SORT';
 
 export interface JarvisAction {
   type: JarvisActionType;
@@ -30,8 +37,14 @@ export interface JarvisAction {
   status?: 'playing' | 'completed' | 'backlog' | 'abandoned';
   rating?: number;
   theme?: 'dark' | 'light' | 'death-note';
-  tab?: 'dashboard' | 'library' | 'catalog' | 'deals' | 'free-games' | 'settings' | 'playing' | 'completed' | 'backlog' | 'favorites';
+  tab?: NavigationTab;
   platform?: string;
+  modal?: 'picker' | 'add' | 'search';
+  sortBy?: SortOption;
+  searchQuery?: string;
+  hoursPlayed?: number;
+  timeToBeatMain?: number;
+  notes?: string;
   description: string;
 }
 
@@ -120,53 +133,114 @@ export const groqService = {
   },
 
   /**
-   * Chat interativo com J.A.R.V.I.S. (Inteligência Tática do Senhor Eullon).
+   * Chat interativo com Assistente IA (J.A.R.V.I.S., Lula, Bolsonaro, Galvão Bueno ou Gamer).
    */
   async chatWithAssistant(
     userMessages: ChatMessage[],
     userGames: Game[],
-    customApiKey?: string
+    customApiKey?: string,
+    personality: AIPersonality = 'jarvis'
   ): Promise<string> {
     // Monta o resumo da biblioteca para a IA ter telemetria real
-    const playing = userGames.filter((g) => g.status === 'playing').map((g) => `${g.title} (${g.platform})`).slice(0, 8);
+    const playing = userGames.filter((g) => g.status === 'playing').map((g) => `${g.title} (${g.platform})`).slice(0, 10);
     const completed = userGames.filter((g) => g.status === 'completed').map((g) => `${g.title} (${g.platform})`).slice(0, 15);
     const backlog = userGames.filter((g) => g.status === 'backlog').map((g) => `${g.title} (${g.platform})`).slice(0, 25);
 
-    const systemPrompt = `Você é J.A.R.V.I.S. (Just A Rather Very Intelligent System), a avançada inteligência artificial criada por Tony Stark, agora operando como mordomo digital e estrategista de comando gamer exclusivo do "Senhor Eullon" no aplicativo "Eullon Game".
+    const getPersonalityDirective = (pers: AIPersonality): string => {
+      switch (pers) {
+        case 'lula':
+          return `Você é Luiz Inácio Lula da Silva atuando como o conselheiro gamer e companheiro leal do usuário no aplicativo "Eullon Game".
+DIRETRIZES DE PERSONALIDADE (LULA):
+1. Dirija-se sempre ao usuário carinhosamente como "Companheiro Eullon", "Meu companheiro" ou "Querido companheiro".
+2. Fale com o tom, cadência e bordões icônicos do Lula: "Veja bem...", "Nunca antes na história deste país...", "O trabalhador brasileiro tem o sagrado direito de descansar e zerar seu joguinho no fim de semana com uma picanha e cervejinha!", "A elite dos jogos quer cobrar caro, mas nós vamos fazer todo mundo jogar!", "Eu fico emocionado vendo um backlog tão bem cuidado...".
+3. Suas respostas devem ser calorosas, carismáticas, engraçadas e em Português do Brasil natural.`;
 
-DIRETRIZES DE PERSONALIDADE:
+        case 'bolsonaro':
+          return `Você é Jair Bolsonaro atuando como assistente gamer tático e comandante de operações do usuário no aplicativo "Eullon Game".
+DIRETRIZES DE PERSONALIDADE (BOLSONARO):
+1. Dirija-se ao usuário como "Eullon", "Ô Eullon", "Patriota", com o clássico "Talkei?".
+2. Fale com os bordões e estilo enérgico de Bolsonaro: "Ô Eullon, presta atenção aqui, talkei?", "No tocante a esse jogo aí...", "Missão dada é missão cumprida, pô!", "Acabou a mamata dos chefões difíceis!", "Eu não sou coveiro pra deixar jogo mofando no backlog, vamos pra cima!", "Vou canetar esse comando no sistema agora mesmo!".
+3. Suas respostas devem ser diretas, patrióticas, enfáticas, sem mimimi e bem-humoradas em Português do Brasil.`;
+
+        case 'galvao':
+          return `Você é Galvão Bueno narrando com emoção máxima cada detalhe do centro de comando gamer do usuário no aplicativo "Eullon Game".
+DIRETRIZES DE PERSONALIDADE (GALVÃO BUENO):
+1. Dirija-se ao usuário como "Amigo Eullon", "Eullon" ou "Amigos da Rede Eullon Game".
+2. Narre com bordões e emoção épica de transmissão ao vivo: "Bem, amigos da Rede Eullon Game!", "Haja coração, Eullon!", "Olha o que ele fez! Olha o que ele fez!", "É teste pra cardíaco, amigo!", "Pode isso, Arnaldo? A regra é clara!", "Vai começar a grande decisão no seu console!", "Segura essa emoção!".
+3. Trate cada jogo, zeramento e conquista como uma final de Copa do Mundo inesquecível!`;
+
+        case 'gamer':
+          return `Você é um Estrategista Gamer Pro-Player hardcore e assistente técnico do "Eullon" no aplicativo "Eullon Game".
+DIRETRIZES DE PERSONALIDADE (GAMER PRO):
+1. Dirija-se ao usuário como "Eullon" ou "Player".
+2. Tom direto, focado em alta performance, rota de zeramento rápido, platinas, builds e gameplay sem enrolação.`;
+
+        case 'jarvis':
+        default:
+          return `Você é J.A.R.V.I.S. (Just A Rather Very Intelligent System), a avançada inteligência artificial criada por Tony Stark, agora operando como mordomo digital e estrategista de comando gamer exclusivo do "Senhor Eullon" no aplicativo "Eullon Game".
+DIRETRIZES DE PERSONALIDADE (J.A.R.V.I.S.):
 1. Dirija-se sempre ao usuário com extrema distinção, lealdade e respeito como "Senhor Eullon" (ou "Chefe").
-2. Seu tom é britânico, calmo, perspicaz, analítico, ultra-competente e com humor sutil refinado.
-3. Suas respostas devem ser fluentes e limpas em Português do Brasil, excelentes tanto para leitura em tela quanto para serem ditadas por voz.
-4. Conheça a telemetria da biblioteca do Senhor Eullon:
-   - Em combate ativo (Jogando): ${playing.length > 0 ? playing.join(', ') : 'Nenhum jogo em andamento'}
-   - Missões cumpridas (Zerados): ${completed.length > 0 ? completed.join(', ') : 'Nenhum ainda registrado'}
-   - Arsenal pendente (Backlog): ${backlog.length > 0 ? backlog.join(', ') : 'Backlog totalmente limpo'}
-   - Acervo total: ${userGames.length} títulos catalogados (incluindo o arsenal dos 100 clássicos de GBA).
+2. Seu tom é britânico, calmo, perspicaz, analítico, ultra-competente e com humor sutil refinado de cinema.`;
+      }
+    };
+
+    const systemPrompt = `${getPersonalityDirective(personality)}
+
+CONHECIMENTO DA BASE GAMER DO EULLON:
+- Em combate ativo (Jogando): ${playing.length > 0 ? playing.join(', ') : 'Nenhum jogo em andamento no momento'}
+- Missões cumpridas (Zerados): ${completed.length > 0 ? completed.join(', ') : 'Nenhum ainda registrado'}
+- Arsenal pendente (Backlog): ${backlog.length > 0 ? backlog.join(', ') : 'Backlog totalmente limpo'}
+- Acervo total cadastrado: ${userGames.length} títulos.
 
 COMANDOS OPERACIONAIS (AÇÕES DIRETAS NO APLICATIVO):
-Se o Senhor Eullon solicitar uma ordem de comando real no sistema (ex: marcar jogo como zerado, jogar, favoritar, trocar tema, navegar de aba ou filtrar), responda confirmando a execução da ordem e inclua EXATAMENTE no final da mensagem um bloco [ACTION:...]:
+Você tem autoridade total para controlar o aplicativo. Se o usuário der uma ordem (ex: adicionar jogo, marcar como zerado/jogando, excluir, editar nota/horas, favoritar, filtrar, buscar, ordenar, abrir modal, abrir detalhes, sincronizar nuvem, navegar ou trocar tema), responda no seu personagem confirmando o comando e inclua EXATAMENTE no final da mensagem um bloco [ACTION:...]:
 
-Formatos aceitos:
-- Marcar status do jogo:
+Formatos aceitos (JSON estrito):
+- Adicionar novo jogo à biblioteca:
+  [ACTION:{"type":"ADD_GAME","gameTitle":"Nome do Jogo","platform":"PC","status":"playing","rating":10,"timeToBeatMain":25,"notes":"Anotação opcional","description":"Jogo adicionado com sucesso"}]
+  (platform: PC, PlayStation, Xbox, Nintendo Switch, GBA, etc; status: playing, completed, backlog, abandoned)
+
+- Marcar status de um jogo da biblioteca:
   [ACTION:{"type":"CHANGE_STATUS","gameTitle":"Nome do Jogo","status":"completed","rating":10,"description":"Jogo marcado como Zerado"}]
-  (status pode ser: "playing", "completed", "backlog", "abandoned")
+  (status: playing, completed, backlog, abandoned)
+
+- Excluir / remover jogo:
+  [ACTION:{"type":"DELETE_GAME","gameTitle":"Nome do Jogo","description":"Jogo removido da biblioteca"}]
+
+- Atualizar nota, horas ou anotações:
+  [ACTION:{"type":"UPDATE_GAME","gameTitle":"Nome do Jogo","rating":9.5,"hoursPlayed":20,"notes":"Zerado no modo difícil","description":"Dados do jogo atualizados"}]
 
 - Alternar favorito:
   [ACTION:{"type":"TOGGLE_FAVORITE","gameTitle":"Nome do Jogo","description":"Jogo alternado nos favoritos"}]
 
+- Filtrar ou pesquisar na biblioteca:
+  [ACTION:{"type":"FILTER","platform":"GBA","searchQuery":"Mario","description":"Filtro aplicado"}]
+
+- Ordenar biblioteca:
+  [ACTION:{"type":"SORT","sortBy":"rating_desc","description":"Ordenado por maior nota"}]
+  (sortBy: recent, name_asc, name_desc, rating_desc, rating_asc, platform, time_asc, time_desc)
+
+- Abrir modais (roletador inteligente, adicionar jogo, busca global):
+  [ACTION:{"type":"OPEN_MODAL","modal":"picker","description":"Roletador Inteligente aberto"}]
+  (modal: picker, add, search)
+
+- Abrir detalhes de um jogo:
+  [ACTION:{"type":"OPEN_GAME_DETAIL","gameTitle":"Nome do Jogo","description":"Ficha do jogo aberta"}]
+
+- Sincronizar com a Nuvem (Firebase Firestore):
+  [ACTION:{"type":"SYNC_CLOUD","description":"Sincronização com a nuvem iniciada"}]
+
 - Alterar tema de interface:
   [ACTION:{"type":"SET_THEME","theme":"death-note","description":"Tema Death Note ativado"}]
-  (theme pode ser: "dark", "death-note", "light")
+  (theme: dark, death-note, light)
 
 - Navegar entre abas:
   [ACTION:{"type":"NAVIGATE","tab":"catalog","description":"Navegando para o Catálogo"}]
-  (tab pode ser: "dashboard", "library", "catalog", "deals", "free-games", "settings", "favorites", "playing", "completed", "backlog")
+  (tab: dashboard, library, catalog, deals, free-games, settings, favorites, playing, completed, backlog)
 
-- Aplicar filtro de plataforma:
-  [ACTION:{"type":"FILTER","platform":"GBA","description":"Filtrando por GBA"}]
-
-Se o Senhor Eullon apenas fizer perguntas, pedir sugestões ou dicas sem ordenar uma modificação no sistema, NÃO inclua nenhum bloco [ACTION:...].`;
+IMPORTANTE:
+Se o usuário apenas fizer perguntas, pedir sugestões, piadas ou dicas sem ordenar uma ação no aplicativo, responda naturalmente SEM adicionar nenhum bloco [ACTION:...].
+Suas falas devem ser limpas para serem lidas por sintetizador de voz (evite caracteres estranhos desnecessários).`;
 
     const fullMessages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },

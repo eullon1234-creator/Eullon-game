@@ -2,6 +2,7 @@ import React from 'react';
 import { Gamepad2, Search, Plus, Dices, Moon, Sun, Cloud, CloudOff, BookOpen, Sparkles } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { ArcReactor } from '../common/ArcReactor';
+import { PERSONALITIES } from '../../data/personalities';
 
 export const Navbar: React.FC = () => {
   const {
@@ -175,20 +176,33 @@ export const Navbar: React.FC = () => {
             </span>
           </button>
 
-          {/* Botão J.A.R.V.I.S. (Reator Arc Stark) */}
-          <button
-            type="button"
-            onClick={() => setIsAIAssistantOpen(true)}
-            className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-sm group ${
-              isDeathNote
-                ? 'bg-red-950/40 hover:bg-red-900/60 border-death-crimson/50 text-death-parchment hover:text-white shadow-glow-crimson'
-                : 'bg-gamer-900/90 hover:bg-gamer-850 border-cyan-500/40 hover:border-cyan-400 text-cyan-300 hover:text-white shadow-[0_0_15px_rgba(0,242,254,0.15)] hover:shadow-[0_0_20px_rgba(0,242,254,0.3)]'
-            }`}
-            title="Ativar J.A.R.V.I.S. • Protocolo Stark"
-          >
-            <ArcReactor size="sm" pulse className="group-hover:scale-110 transition-transform" />
-            <span className="hidden sm:inline font-mono tracking-wider text-[11px]">J.A.R.V.I.S.</span>
-          </button>
+          {/* Botão Assistente IA (J.A.R.V.I.S., Lula, Bolsonaro, Galvão, etc.) */}
+          {(() => {
+            const activePersona = PERSONALITIES.find((p) => p.id === settings.aiPersonality) || PERSONALITIES[0];
+            return (
+              <button
+                type="button"
+                onClick={() => setIsAIAssistantOpen(true)}
+                className={`p-2 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-2 shadow-sm group ${
+                  isDeathNote
+                    ? 'bg-red-950/40 hover:bg-red-900/60 border-death-crimson/50 text-death-parchment hover:text-white shadow-glow-crimson'
+                    : `bg-gamer-900/90 hover:bg-gamer-850 ${activePersona.accentBorder} text-slate-200 hover:text-white shadow-[0_0_15px_rgba(0,242,254,0.15)]`
+                }`}
+                title={`Ativar Assistente de Voz • ${activePersona.name}`}
+              >
+                {activePersona.id === 'jarvis' ? (
+                  <ArcReactor size="sm" pulse className="group-hover:scale-110 transition-transform" />
+                ) : (
+                  <span className="text-base leading-none group-hover:scale-110 transition-transform select-none">
+                    {activePersona.emoji}
+                  </span>
+                )}
+                <span className={`hidden sm:inline font-mono tracking-wider text-[11px] font-bold ${activePersona.accentText}`}>
+                  {activePersona.name}
+                </span>
+              </button>
+            );
+          })()}
 
           {/* Theme Cycler */}
           <button

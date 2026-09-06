@@ -18,10 +18,12 @@ export interface ElevenLabsVoiceConfig {
 }
 
 export const ELEVENLABS_VOICES: ElevenLabsVoiceConfig[] = [
-  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (J.A.R.V.I.S. Britânico • Cinema ⭐)', desc: 'Tom refinado, elegante e solene de mordomo Stark', gender: 'Masculino' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (Narrador Épico & Profundo)', desc: 'Voz encorpada, grave e cinematográfica', gender: 'Masculino' },
-  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Locutor Nobre)', desc: 'Pronúncia articulada e sofisticada', gender: 'Masculino' },
-  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger (Cavalheiro Clássico)', desc: 'Voz madura, calma e respeitosa', gender: 'Masculino' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (J.A.R.V.I.S. Britânico • Stark ⭐)', desc: 'Tom refinado, elegante e solene de mordomo Stark', gender: 'Masculino' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (Narrador Épico & Profundo)', desc: 'Voz encorpada, grave, excelente para narração / Galvão', gender: 'Masculino' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Locutor Nobre)', desc: 'Pronúncia articulada, calorosa e sofisticada', gender: 'Masculino' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger (Cavalheiro / Firme)', desc: 'Voz madura, calma, autoritária e respeitosa', gender: 'Masculino' },
+  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam (Jovem Dinâmico / Gamer)', desc: 'Voz ágil, enérgica e descontraída', gender: 'Masculino' },
+  { id: 'custom', name: '🎙️ Inserir Voice ID Próprio (Clonada - Lula, Bolsonaro, etc.)', desc: 'Use o código de qualquer voz clonada sua no ElevenLabs', gender: 'Personalizado' },
 ];
 
 /**

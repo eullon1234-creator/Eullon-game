@@ -66,6 +66,8 @@ export interface FreeToGameItem {
 
 export type ThemeMode = 'dark' | 'light' | 'death-note';
 
+export type AIPersonality = 'jarvis' | 'lula' | 'bolsonaro' | 'galvao' | 'gamer';
+
 export interface AppSettings {
   theme: ThemeMode;
   viewMode: 'grid' | 'list';
@@ -78,6 +80,8 @@ export interface AppSettings {
   voiceProvider?: 'browser' | 'elevenlabs';
   elevenLabsApiKey?: string;
   elevenLabsVoiceId?: string;
+  aiPersonality?: AIPersonality;
+  customVoiceId?: string;
 }
 
 export type SortOption = 

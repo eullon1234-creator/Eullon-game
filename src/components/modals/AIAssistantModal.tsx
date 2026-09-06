@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Send, Trash2, Mic, MicOff, Volume2, VolumeX, 
-  Zap, Shield, Terminal, CheckCircle2, Sparkles, Activity, SlidersHorizontal, Play
+  CheckCircle2, Sparkles, Activity, SlidersHorizontal, Play,
+  ExternalLink
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useToast } from '../../context/ToastContext';
@@ -10,13 +11,12 @@ import { groqService, ChatMessage, JarvisAction } from '../../services/groqServi
 import { speechService, VoiceOption, ELEVENLABS_VOICES } from '../../services/speechService';
 import { ArcReactor } from '../common/ArcReactor';
 import { CURATED_GAMES } from '../../data/curatedGames';
-
-const JARVIS_QUICK_COMMANDS = [
-  { icon: '📊', label: 'J.A.R.V.I.S., forneça um briefing tático do meu backlog.' },
-  { icon: '👾', label: 'J.A.R.V.I.S., quais são os 3 melhores clássicos de GBA para hoje?' },
-  { icon: '⚡', label: 'J.A.R.V.I.S., qual a rota mais rápida para zerar meu próximo jogo?' },
-  { icon: '🎮', label: 'J.A.R.V.I.S., mostre apenas os meus jogos de GBA na biblioteca.' },
-];
+import { AIPersonality } from '../../types/game';
+import { 
+  PERSONALITIES, 
+  getGreetingForPersonality, 
+  getQuickCommandsForPersonality 
+} from '../../data/personalities';
 
 export const AIAssistantModal: React.FC = () => {
   const { 
@@ -28,13 +28,21 @@ export const AIAssistantModal: React.FC = () => {
     quickToggleFavorite,
     updateSettings,
     setActiveTab,
-    filters,
     setFilters,
-    addGame
+    addGame,
+    deleteGame,
+    updateGame,
+    setSelectedGame,
+    setIsAddModalOpen,
+    setIsPickerModalOpen,
+    setIsSearchModalOpen,
+    syncToCloudNow,
   } = useGame();
   
   const { showToast } = useToast();
   const isDeathNote = settings.theme === 'death-note';
+  const currentPersonality: AIPersonality = settings.aiPersonality || 'jarvis';
+  const activePersonaMeta = PERSONALITIES.find((p) => p.id === currentPersonality) || PERSONALITIES[0];
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,10 +67,10 @@ export const AIAssistantModal: React.FC = () => {
     }
   }, [isAIAssistantOpen]);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       role: 'assistant',
-      content: 'Às suas ordens, **Senhor Eullon**. Todos os sistemas operacionais do seu centro de comando gamer estão em 100%. Posso analisar seu backlog, recomendar sua próxima conquista ou executar comandos operacionais no sistema. Como posso servi-lo hoje?',
+      content: getGreetingForPersonality(currentPersonality),
     },
   ]);
 
@@ -98,7 +106,7 @@ export const AIAssistantModal: React.FC = () => {
   if (!isAIAssistantOpen) return null;
 
   /**
-   * Executa uma ação ordenada pelo J.A.R.V.I.S. no ecossistema do app.
+   * Executa uma ação ordenada pela IA no ecossistema completo do app.
    */
   const executeJarvisAction = (action: JarvisAction) => {
     try {
@@ -107,7 +115,7 @@ export const AIAssistantModal: React.FC = () => {
         let targetGame = games.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
 
         if (!targetGame) {
-          // Procura no catálogo curado para adicionar automaticamente
+          // Procura no catálogo curado para adicionar automaticamente se não existir
           const curatedMatch = CURATED_GAMES.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
           if (curatedMatch) {
             targetGame = addGame({
@@ -125,44 +133,124 @@ export const AIAssistantModal: React.FC = () => {
 
         if (targetGame && action.status) {
           quickChangeStatus(targetGame.id, action.status);
-          showToast(`⚡ J.A.R.V.I.S.: ${targetGame.title} definido como ${action.status.toUpperCase()}`, 'success');
-          setLastExecutedAction(`Protocolo: "${targetGame.title}" marcado como ${action.status.toUpperCase()}`);
+          showToast(`⚡ ${activePersonaMeta.name}: "${targetGame.title}" marcado como ${action.status.toUpperCase()}`, 'success');
+          setLastExecutedAction(`Status alterado: "${targetGame.title}" ➔ ${action.status.toUpperCase()}`);
+        }
+      } else if (action.type === 'ADD_GAME') {
+        const title = action.gameTitle?.trim() || 'Novo Jogo';
+        const platform = action.platform?.trim() || 'PC';
+        
+        // Verifica se já existe no acervo
+        const existing = games.find((g) => g.title.toLowerCase() === title.toLowerCase() && g.platform.toLowerCase() === platform.toLowerCase());
+        if (existing) {
+          showToast(`ℹ️ "${title}" já está cadastrado no seu acervo!`, 'info');
+          setLastExecutedAction(`"${title}" já consta na sua biblioteca.`);
+          return;
+        }
+
+        // Tenta achar capa no catálogo curado
+        const curatedMatch = CURATED_GAMES.find((g) => g.title.toLowerCase() === title.toLowerCase());
+        const newGame = addGame({
+          title,
+          platform,
+          status: action.status || 'playing',
+          coverUrl: curatedMatch?.coverUrl || '',
+          rating: action.rating,
+          notes: action.notes || '',
+          favorite: false,
+          timeToBeat: action.timeToBeatMain ? { main: action.timeToBeatMain } : curatedMatch?.timeToBeat,
+        });
+
+        showToast(`🎮 ${activePersonaMeta.name}: Jogo "${newGame.title}" adicionado!`, 'success');
+        setLastExecutedAction(`Jogo Adicionado: "${newGame.title}" (${newGame.platform})`);
+      } else if (action.type === 'DELETE_GAME') {
+        const query = action.gameTitle?.toLowerCase().trim() || '';
+        const targetGame = games.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
+        if (targetGame) {
+          deleteGame(targetGame.id);
+          showToast(`🗑️ ${activePersonaMeta.name}: "${targetGame.title}" foi removido.`, 'info');
+          setLastExecutedAction(`Jogo Removido: "${targetGame.title}"`);
+        } else {
+          showToast(`⚠️ Jogo "${action.gameTitle}" não encontrado para exclusão.`, 'warning');
+        }
+      } else if (action.type === 'UPDATE_GAME') {
+        const query = action.gameTitle?.toLowerCase().trim() || '';
+        const targetGame = games.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
+        if (targetGame) {
+          const updates: any = {};
+          if (action.rating !== undefined) updates.rating = action.rating;
+          if (action.hoursPlayed !== undefined) updates.hoursPlayed = action.hoursPlayed;
+          if (action.notes) updates.notes = action.notes;
+          if (action.status) updates.status = action.status;
+          updateGame(targetGame.id, updates);
+          showToast(`✏️ ${activePersonaMeta.name}: "${targetGame.title}" atualizado!`, 'success');
+          setLastExecutedAction(`Atualizado: "${targetGame.title}"`);
         }
       } else if (action.type === 'TOGGLE_FAVORITE') {
         const query = action.gameTitle?.toLowerCase().trim() || '';
         const targetGame = games.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
         if (targetGame) {
           quickToggleFavorite(targetGame.id);
-          showToast(`⚡ J.A.R.V.I.S.: Favorito de "${targetGame.title}" alternado`, 'success');
-          setLastExecutedAction(`Protocolo: Favorito de "${targetGame.title}" alternado`);
+          showToast(`⭐ ${activePersonaMeta.name}: Favorito de "${targetGame.title}" alternado`, 'success');
+          setLastExecutedAction(`Favorito alternado: "${targetGame.title}"`);
         }
       } else if (action.type === 'SET_THEME') {
         if (action.theme) {
           updateSettings({ theme: action.theme });
-          showToast(`⚡ J.A.R.V.I.S.: Interface alterada para ${action.theme.toUpperCase()}`, 'info');
-          setLastExecutedAction(`Protocolo: Tema alterado para ${action.theme.toUpperCase()}`);
+          showToast(`🎨 ${activePersonaMeta.name}: Tema ${action.theme.toUpperCase()} ativado`, 'info');
+          setLastExecutedAction(`Tema de interface alterado para ${action.theme.toUpperCase()}`);
         }
       } else if (action.type === 'NAVIGATE') {
         if (action.tab) {
-          setActiveTab(action.tab as any);
-          showToast(`⚡ J.A.R.V.I.S.: Navegando para ${action.tab.toUpperCase()}`, 'info');
-          setLastExecutedAction(`Protocolo: Aba alterada para ${action.tab.toUpperCase()}`);
+          setActiveTab(action.tab);
+          showToast(`⚡ ${activePersonaMeta.name}: Navegando para ${action.tab.toUpperCase()}`, 'info');
+          setLastExecutedAction(`Aba alterada para ${action.tab.toUpperCase()}`);
         }
       } else if (action.type === 'FILTER') {
-        if (action.platform) {
-          setFilters({ ...filters, platform: action.platform });
+        setFilters((prev) => ({
+          ...prev,
+          platform: action.platform || prev.platform,
+          search: action.searchQuery !== undefined ? action.searchQuery : prev.search,
+        }));
+        setActiveTab('library');
+        showToast(`🔍 ${activePersonaMeta.name}: Filtros aplicados na biblioteca`, 'info');
+        setLastExecutedAction(`Filtros aplicados (Plataforma: ${action.platform || 'todas'}, Busca: "${action.searchQuery || ''}")`);
+      } else if (action.type === 'SORT') {
+        if (action.sortBy) {
+          setFilters((prev) => ({ ...prev, sortBy: action.sortBy! }));
           setActiveTab('library');
-          showToast(`⚡ J.A.R.V.I.S.: Filtro de plataforma "${action.platform}" ativado`, 'info');
-          setLastExecutedAction(`Protocolo: Filtro de plataforma "${action.platform}" aplicado`);
+          showToast(`📊 ${activePersonaMeta.name}: Biblioteca ordenada por ${action.sortBy}`, 'info');
+          setLastExecutedAction(`Ordenação aplicada: ${action.sortBy}`);
         }
+      } else if (action.type === 'OPEN_GAME_DETAIL') {
+        const query = action.gameTitle?.toLowerCase().trim() || '';
+        const targetGame = games.find((g) => g.title.toLowerCase().includes(query) || query.includes(g.title.toLowerCase()));
+        if (targetGame) {
+          setSelectedGame(targetGame);
+          setIsAIAssistantOpen(false);
+          showToast(`📖 Ficha de "${targetGame.title}" aberta`, 'info');
+        }
+      } else if (action.type === 'OPEN_MODAL') {
+        setIsAIAssistantOpen(false);
+        if (action.modal === 'picker') {
+          setIsPickerModalOpen(true);
+        } else if (action.modal === 'add') {
+          setIsAddModalOpen(true);
+        } else if (action.modal === 'search') {
+          setIsSearchModalOpen(true);
+        }
+      } else if (action.type === 'SYNC_CLOUD') {
+        syncToCloudNow();
+        showToast(`☁️ ${activePersonaMeta.name}: Sincronização em nuvem disparada!`, 'info');
+        setLastExecutedAction('Sincronização com o Firebase Firestore iniciada');
       }
     } catch (err) {
-      console.warn('Falha ao executar ação de comando do J.A.R.V.I.S.:', err);
+      console.warn('Falha ao executar ação do assistente:', err);
     }
   };
 
   /**
-   * Envia uma mensagem para o J.A.R.V.I.S. e orquestra a resposta por texto, voz e execução de comandos.
+   * Envia uma mensagem para a IA e orquestra a resposta por texto, voz e execução de comandos.
    */
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
@@ -177,9 +265,11 @@ export const AIAssistantModal: React.FC = () => {
     setInput('');
     setLoading(true);
 
+    const activeVoiceId = settings.customVoiceId?.trim() || settings.elevenLabsVoiceId || activePersonaMeta.voicePreset;
+
     try {
       const chatHistory = updatedMessages.filter((m) => m.role === 'user' || m.role === 'assistant');
-      const rawResponse = await groqService.chatWithAssistant(chatHistory, games, settings.groqApiKey);
+      const rawResponse = await groqService.chatWithAssistant(chatHistory, games, settings.groqApiKey, currentPersonality);
 
       // Interpreta se há ação de comando no sistema
       const { message: cleanMessage, action } = groqService.parseJarvisResponse(rawResponse);
@@ -199,7 +289,7 @@ export const AIAssistantModal: React.FC = () => {
           {
             provider: settings.voiceProvider || 'elevenlabs',
             voiceURI: settings.jarvisVoiceURI,
-            elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+            elevenVoiceId: activeVoiceId,
             elevenApiKey: settings.elevenLabsApiKey,
             rate: settings.jarvisVoiceRate,
             pitch: settings.jarvisVoicePitch,
@@ -207,7 +297,7 @@ export const AIAssistantModal: React.FC = () => {
         );
       }
     } catch (err: any) {
-      const errorMessage = `Senhor Eullon, nossos canais de telemetria com o Groq apresentaram uma oscilação temporária: ${err.message || 'Verifique a conexão.'}`;
+      const errorMessage = `Oscilação temporária com os servidores da IA: ${err.message || 'Verifique a conexão.'}`;
       setMessages((prev) => [...prev, { role: 'assistant', content: errorMessage }]);
 
       if (voiceEnabled) {
@@ -218,7 +308,7 @@ export const AIAssistantModal: React.FC = () => {
           {
             provider: settings.voiceProvider || 'elevenlabs',
             voiceURI: settings.jarvisVoiceURI,
-            elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+            elevenVoiceId: activeVoiceId,
             elevenApiKey: settings.elevenLabsApiKey,
             rate: settings.jarvisVoiceRate,
             pitch: settings.jarvisVoicePitch,
@@ -329,27 +419,33 @@ export const AIAssistantModal: React.FC = () => {
             : 'bg-gamer-950/98 border-cyan-500/40 shadow-[0_0_60px_rgba(0,242,254,0.2)]'
         }`}
       >
-        {/* Top Header • Stark Industries HUD */}
+        {/* Top Header • Persona HUD */}
         <div
           className={`flex items-center justify-between px-3.5 sm:px-5 py-3 sm:py-3.5 border-b backdrop-blur-md flex-shrink-0 ${
             isDeathNote ? 'border-red-950/80 bg-death-900/80' : 'border-cyan-900/50 bg-gamer-900/80'
           }`}
         >
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <ArcReactor size="md" pulse={isSpeaking || isListening} />
+            {activePersonaMeta.id === 'jarvis' ? (
+              <ArcReactor size="md" pulse={isSpeaking || isListening} />
+            ) : (
+              <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg sm:text-xl shadow-lg border ${activePersonaMeta.accentBorder} ${activePersonaMeta.accentBg} ${isSpeaking || isListening ? 'animate-bounce' : ''}`}>
+                <span>{activePersonaMeta.emoji}</span>
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-black text-white flex items-center gap-2 tracking-wide">
-                  <span className="font-mono text-cyan-400">J.A.R.V.I.S.</span>
-                  <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md font-mono font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
-                    <Activity className="w-3 h-3 animate-pulse text-cyan-400" />
-                    PROTOCOLO STARK
+                  <span className={`font-mono ${activePersonaMeta.accentText}`}>{activePersonaMeta.name}</span>
+                  <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md font-mono font-bold ${activePersonaMeta.accentBg} ${activePersonaMeta.accentText} border ${activePersonaMeta.accentBorder} flex items-center gap-1`}>
+                    <Activity className="w-3 h-3 animate-pulse" />
+                    {activePersonaMeta.tag}
                   </span>
                 </h2>
               </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>ONLINE • A serviço exclusivo do Senhor Eullon</span>
+              <p className="text-[11px] text-slate-400 flex items-center gap-1.5 font-mono truncate max-w-[240px] sm:max-w-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="truncate">ONLINE • {activePersonaMeta.desc}</span>
               </p>
             </div>
           </div>
@@ -359,7 +455,7 @@ export const AIAssistantModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-              title="Calibrar voz neural do J.A.R.V.I.S."
+              title="Calibrar voz do assistente"
               className={`p-2 rounded-xl border transition-all ${
                 showVoiceSettings
                   ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 shadow-glow-cyan'
@@ -408,13 +504,66 @@ export const AIAssistantModal: React.FC = () => {
           </div>
         </div>
 
+        {/* Barra de Seleção Rápida de Personagem (1 Clique) */}
+        <div className="px-3.5 sm:px-5 py-2 bg-gamer-950/90 border-b border-slate-800/80 overflow-x-auto scrollbar-none flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider font-bold mr-1 shrink-0">
+            Personagem:
+          </span>
+          {PERSONALITIES.map((p) => {
+            const isSelected = p.id === currentPersonality;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => {
+                  if (p.id !== currentPersonality) {
+                    updateSettings({ 
+                      aiPersonality: p.id,
+                      elevenLabsVoiceId: p.voicePreset 
+                    });
+                    const greeting = getGreetingForPersonality(p.id);
+                    setMessages((prev) => [
+                      ...prev,
+                      { role: 'assistant', content: greeting }
+                    ]);
+                    showToast(`${p.emoji} Personalidade alternada para ${p.name}!`, 'info');
+                    if (voiceEnabled) {
+                      speechService.speak(
+                        greeting,
+                        () => setIsSpeaking(true),
+                        () => setIsSpeaking(false),
+                        {
+                          provider: settings.voiceProvider || 'elevenlabs',
+                          voiceURI: settings.jarvisVoiceURI,
+                          elevenVoiceId: settings.customVoiceId?.trim() || p.voicePreset,
+                          elevenApiKey: settings.elevenLabsApiKey,
+                          rate: settings.jarvisVoiceRate,
+                          pitch: settings.jarvisVoicePitch,
+                        }
+                      );
+                    }
+                  }
+                }}
+                className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 border ${
+                  isSelected
+                    ? `${p.accentBg} ${p.accentText} ${p.accentBorder} shadow-sm scale-[1.02]`
+                    : 'bg-gamer-900/60 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                }`}
+              >
+                <span>{p.emoji}</span>
+                <span>{p.name}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Painel Expansível de Calibração de Voz Neural */}
         {showVoiceSettings && (
           <div className="px-5 py-4 bg-gamer-950/98 border-b border-cyan-500/30 space-y-3.5 animate-fadeIn font-sans text-xs">
             <div className="flex items-center justify-between">
               <span className="font-mono text-cyan-400 font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>Calibração de Voz do J.A.R.V.I.S.</span>
+                <span>Calibração de Voz ({activePersonaMeta.name})</span>
               </span>
               <button
                 type="button"
@@ -454,13 +603,13 @@ export const AIAssistantModal: React.FC = () => {
 
             {settings.voiceProvider !== 'browser' ? (
               /* Configuração do ElevenLabs */
-              <div className="space-y-2.5 animate-fadeIn">
+              <div className="space-y-3 animate-fadeIn">
                 <div className="space-y-1.5">
                   <label className="text-slate-300 font-semibold block text-[11px]">
-                    Voz de Estúdio do J.A.R.V.I.S. (ElevenLabs):
+                    Voz Padrão ou Sugerida (ElevenLabs):
                   </label>
                   <select
-                    value={settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb'}
+                    value={settings.elevenLabsVoiceId || activePersonaMeta.voicePreset}
                     onChange={(e) => updateSettings({ elevenLabsVoiceId: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-gamer-900 border border-cyan-500/40 text-white text-xs focus:outline-none focus:border-cyan-400 font-sans"
                   >
@@ -471,8 +620,48 @@ export const AIAssistantModal: React.FC = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Campo para Voice ID Personalizado (Lula, Bolsonaro, etc.) */}
+                <div className="space-y-1.5 p-3 rounded-xl bg-gamer-900/90 border border-cyan-500/30">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <label className="text-cyan-300 font-bold flex items-center gap-1.5">
+                      <span>🎙️ Voice ID Personalizado (Voz Clonada):</span>
+                    </label>
+                    <a
+                      href="https://elevenlabs.io/app/voice-lab"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-cyan-400 hover:underline flex items-center gap-1 text-[10px]"
+                    >
+                      <span>Pegar ID no ElevenLabs</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Cole aqui o Voice ID clonado do Lula, Bolsonaro, etc..."
+                      value={settings.customVoiceId || ''}
+                      onChange={(e) => updateSettings({ customVoiceId: e.target.value })}
+                      className="flex-1 px-3 py-1.5 rounded-lg bg-gamer-950 border border-slate-700 text-white placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-400"
+                    />
+                    {settings.customVoiceId && (
+                      <button
+                        type="button"
+                        onClick={() => updateSettings({ customVoiceId: undefined })}
+                        className="px-2.5 py-1 rounded-lg bg-rose-900/30 text-rose-300 text-xs border border-rose-800/50 hover:bg-rose-900/50"
+                      >
+                        Limpar
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                    💡 Se preenchido, o assistente falará diretamente com a voz clonada correspondente a este código.
+                  </p>
+                </div>
+
                 <p className="text-[11px] text-slate-400">
-                  ⚡ Conectado à sua conta ElevenLabs (10.000 caracteres mensais gratuitos com voz real de Hollywood).
+                  ⚡ Conectado à sua conta ElevenLabs (10.000 caracteres mensais gratuitos com voz hiper-realista).
                 </p>
               </div>
             ) : (
@@ -611,7 +800,13 @@ export const AIAssistantModal: React.FC = () => {
               >
                 {isBot && (
                   <div className="shrink-0 mt-0.5">
-                    <ArcReactor size="sm" pulse={isSpeaking && index === messages.length - 1} />
+                    {activePersonaMeta.id === 'jarvis' ? (
+                      <ArcReactor size="sm" pulse={isSpeaking && index === messages.length - 1} />
+                    ) : (
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-sm bg-slate-800 border ${activePersonaMeta.accentBorder}`}>
+                        {activePersonaMeta.emoji}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -642,9 +837,15 @@ export const AIAssistantModal: React.FC = () => {
 
           {loading && (
             <div className="flex gap-3 items-center text-xs text-slate-400 animate-pulse pl-9">
-              <ArcReactor size="sm" pulse />
+              {activePersonaMeta.id === 'jarvis' ? (
+                <ArcReactor size="sm" pulse />
+              ) : (
+                <div className="w-5 h-5 rounded-full flex items-center justify-center text-xs">
+                  {activePersonaMeta.emoji}
+                </div>
+              )}
               <div className="flex items-center gap-1.5 font-mono text-cyan-400">
-                <span>J.A.R.V.I.S. processando telemetria em LPU...</span>
+                <span>{activePersonaMeta.name} processando em LPU...</span>
               </div>
             </div>
           )}
@@ -652,7 +853,7 @@ export const AIAssistantModal: React.FC = () => {
           {isSpeaking && (
             <div className="flex gap-2 items-center text-[11px] text-cyan-300 font-mono pl-9 animate-fadeIn">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-              <span>J.A.R.V.I.S. falando...</span>
+              <span>{activePersonaMeta.name} falando...</span>
             </div>
           )}
 
@@ -661,7 +862,7 @@ export const AIAssistantModal: React.FC = () => {
 
         {/* Suggested Protocol Commands */}
         <div className="px-4 py-2 border-t border-slate-800/80 bg-gamer-900/40 overflow-x-auto scrollbar-none flex items-center gap-2">
-          {JARVIS_QUICK_COMMANDS.map((prompt, idx) => (
+          {getQuickCommandsForPersonality(currentPersonality).map((prompt, idx) => (
             <button
               key={idx}
               type="button"
@@ -689,7 +890,7 @@ export const AIAssistantModal: React.FC = () => {
             <div className="mb-2 px-3 py-1.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between font-mono animate-pulse">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                <span>Ouvindo sua voz, Senhor Eullon... (Fale seu comando)</span>
+                <span>Ouvindo sua voz, Senhor Eullon... ({activePersonaMeta.name} em prontidão)</span>
               </div>
               <button
                 type="button"
@@ -712,7 +913,7 @@ export const AIAssistantModal: React.FC = () => {
             <button
               type="button"
               onClick={handleToggleListening}
-              title={isListening ? 'Parar gravação' : 'Falar com J.A.R.V.I.S. por voz'}
+              title={isListening ? 'Parar gravação' : `Falar com ${activePersonaMeta.name} por voz`}
               className={`p-3 rounded-2xl border transition-all flex items-center justify-center shrink-0 ${
                 isListening
                   ? 'bg-rose-600 text-white border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-pulse'
@@ -728,7 +929,7 @@ export const AIAssistantModal: React.FC = () => {
               value={input}
               disabled={loading}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isListening ? 'Ouvindo...' : 'Comande o J.A.R.V.I.S. por texto ou use o microfone...'}
+              placeholder={isListening ? 'Ouvindo...' : `Comande ${activePersonaMeta.name} por texto ou microfone...`}
               className={`flex-1 px-4 py-3 rounded-2xl border text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none transition-all font-sans ${
                 isDeathNote
                   ? 'bg-death-950 border-red-950/80 focus:border-death-crimson focus:shadow-glow-crimson'
