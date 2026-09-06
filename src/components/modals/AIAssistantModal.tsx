@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, Send, Trash2, Mic, MicOff, Volume2, VolumeX, 
   CheckCircle2, Sparkles, Activity, SlidersHorizontal, Play,
-  ExternalLink
+  ExternalLink, AlertTriangle
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useToast } from '../../context/ToastContext';
@@ -53,6 +53,19 @@ export const AIAssistantModal: React.FC = () => {
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<VoiceOption[]>([]);
   const [testingVoice, setTestingVoice] = useState(false);
+  const [elevenLabsQuotaWarning, setElevenLabsQuotaWarning] = useState<string | null>(null);
+
+  // Escuta alertas de cota ou status vindos do serviço de voz ElevenLabs
+  useEffect(() => {
+    const handleStatusEvent = (e: any) => {
+      if (e.detail?.isQuota) {
+        setElevenLabsQuotaWarning(e.detail.message);
+        showToast('⚠️ Cota de 10.000 caracteres do ElevenLabs esgotada neste mês. Usando voz do navegador temporariamente.', 'warning');
+      }
+    };
+    window.addEventListener('elevenlabs_status_event', handleStatusEvent);
+    return () => window.removeEventListener('elevenlabs_status_event', handleStatusEvent);
+  }, [showToast]);
 
   // Carrega vozes neurais assim que o modal abre ou vozes são detectadas
   useEffect(() => {
@@ -557,6 +570,35 @@ export const AIAssistantModal: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Alerta de Cota Esgotada do ElevenLabs */}
+        {elevenLabsQuotaWarning && (
+          <div className="px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/30 flex items-start justify-between gap-2.5 text-xs text-amber-200 animate-fadeIn">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-[11px] text-amber-300">
+                  Créditos do ElevenLabs Esgotados (10.000 Caracteres/Mês Atingidos)
+                </p>
+                <p className="text-[10px] text-amber-200/90 mt-0.5 leading-snug">
+                  O assistente está usando a voz do navegador como reserva. Para reativar as vozes de cinema, crie uma conta grátis em{' '}
+                  <a href="https://elevenlabs.io" target="_blank" rel="noreferrer" className="underline font-bold text-cyan-300">
+                    elevenlabs.io
+                  </a>{' '}
+                  e adicione sua nova chave nas Configurações ⚙️.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setElevenLabsQuotaWarning(null)}
+              className="text-amber-400/80 hover:text-white p-1 shrink-0"
+              title="Fechar aviso"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         {/* Painel Expansível de Calibração de Voz Neural */}
         {showVoiceSettings && (

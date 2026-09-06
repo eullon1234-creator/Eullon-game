@@ -203,10 +203,15 @@ export const speechService = {
     const cleaned = cleanTextForSpeech(text);
     if (!cleaned) return false;
 
+    // Se o voiceId for "custom" ou inválido, usa o George (J.A.R.V.I.S.) como padrão garantido
+    const effectiveVoiceId = (voiceId && voiceId !== 'custom' && voiceId.length > 5) 
+      ? voiceId 
+      : 'JBFqnCBsd6RMkjVDRZzb';
+
     this.stopSpeaking();
 
     try {
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${effectiveVoiceId}`, {
         method: 'POST',
         headers: {
           'xi-api-key': apiKey,
@@ -228,6 +233,22 @@ export const speechService = {
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         console.warn('ElevenLabs API retornou erro:', errData);
+        const code = errData?.detail?.code || errData?.detail?.status;
+        const msg = errData?.detail?.message || '';
+        const isQuota = code === 'quota_exceeded' || msg.includes('quota');
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('elevenlabs_status_event', {
+              detail: {
+                isQuota,
+                message: isQuota
+                  ? 'Os créditos da chave ElevenLabs acabaram (10.000 caracteres atingidos no mês). O assistente está usando a voz do navegador como reserva.'
+                  : `Aviso ElevenLabs (${response.status}): ${msg || 'Não foi possível reproduzir o áudio de estúdio.'}`,
+              },
+            })
+          );
+        }
         return false;
       }
 
@@ -259,6 +280,80 @@ export const speechService = {
     } catch (err) {
       console.warn('Falha na comunicação com ElevenLabs:', err);
       return false;
+    }
+  },
+
+  /**
+   * Verifica a conectividade e o status da cota da chave ElevenLabs.
+   */
+  async checkElevenLabsStatus(customApiKey?: string): Promise<{
+    ok: boolean;
+    status: 'active' | 'quota_exceeded' | 'invalid_key' | 'network_error';
+    message: string;
+  }> {
+    const apiKey = customApiKey?.trim() || DEFAULT_ELEVENLABS_KEY;
+    if (!apiKey) {
+      return {
+        ok: false,
+        status: 'invalid_key',
+        message: 'Nenhuma chave de API configurada.',
+      };
+    }
+
+    try {
+      // Faz um teste rápido com o endpoint TTS
+      const res = await fetch('https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Olá',
+          model_id: 'eleven_multilingual_v2',
+        }),
+      });
+
+      if (res.ok) {
+        return {
+          ok: true,
+          status: 'active',
+          message: 'Chave ativa e pronta para reprodução em alta definição!',
+        };
+      }
+
+      const data = await res.json().catch(() => ({}));
+      const code = data?.detail?.code || data?.detail?.status;
+      const msg = data?.detail?.message || '';
+
+      if (code === 'quota_exceeded' || msg.includes('quota')) {
+        return {
+          ok: false,
+          status: 'quota_exceeded',
+          message: 'Cota de 10.000 caracteres mensais esgotada nesta conta. Crie uma nova conta gratuita no elevenlabs.io para obter outra chave.',
+        };
+      }
+
+      if (res.status === 401) {
+        return {
+          ok: false,
+          status: 'invalid_key',
+          message: 'Chave da API inválida ou sem permissões suficientes.',
+        };
+      }
+
+      return {
+        ok: false,
+        status: 'network_error',
+        message: `Servidor ElevenLabs retornou status ${res.status}: ${msg}`,
+      };
+    } catch (err: any) {
+      return {
+        ok: false,
+        status: 'network_error',
+        message: err.message || 'Falha de conexão com os servidores do ElevenLabs.',
+      };
     }
   },
 
@@ -338,7 +433,7 @@ export const speechService = {
     onEnd?: () => void,
     options?: SpeechOptions
   ): Promise<void> {
-    const isEleven = (options?.provider === 'elevenlabs') || (!options?.provider && !!(options?.elevenApiKey || DEFAULT_ELEVENLABS_KEY));
+    const isEleven = options?.provider !== 'browser';
 
     if (isEleven) {
       const voiceId = options?.elevenVoiceId || 'JBFqnCBsd6RMkjVDRZzb'; // George (J.A.R.V.I.S.)

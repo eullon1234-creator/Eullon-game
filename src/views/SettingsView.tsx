@@ -88,6 +88,31 @@ export const SettingsView: React.FC = () => {
     }
   }, []);
 
+  const [checkingElevenLabs, setCheckingElevenLabs] = useState(false);
+  const [elevenLabsCheckStatus, setElevenLabsCheckStatus] = useState<{
+    ok: boolean;
+    status: 'active' | 'quota_exceeded' | 'invalid_key' | 'network_error';
+    message: string;
+  } | null>(null);
+
+  const handleCheckElevenLabs = async () => {
+    if (checkingElevenLabs) return;
+    setCheckingElevenLabs(true);
+    setElevenLabsCheckStatus(null);
+    try {
+      const res = await speechService.checkElevenLabsStatus(settings.elevenLabsApiKey);
+      setElevenLabsCheckStatus(res);
+    } catch (e: any) {
+      setElevenLabsCheckStatus({
+        ok: false,
+        status: 'network_error',
+        message: e.message || 'Erro ao comunicar com o ElevenLabs.',
+      });
+    } finally {
+      setCheckingElevenLabs(false);
+    }
+  };
+
   const handleTestVoiceSettings = () => {
     if (testingVoiceSettings) return;
     setTestingVoiceSettings(true);
@@ -700,9 +725,79 @@ export const SettingsView: React.FC = () => {
                     </button>
                   )}
                 </div>
+
+                {/* Botão de Verificação de Cota da Chave */}
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleCheckElevenLabs}
+                    disabled={checkingElevenLabs}
+                    className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all flex items-center gap-1.5 shadow-glow-cyan"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{checkingElevenLabs ? 'Verificando com servidores ElevenLabs...' : '🔍 Verificar Status e Cota da Chave'}</span>
+                  </button>
+                </div>
+
+                {/* Feedback da Verificação */}
+                {elevenLabsCheckStatus && (
+                  <div
+                    className={`p-3 rounded-xl border text-xs space-y-2 animate-fadeIn ${
+                      elevenLabsCheckStatus.ok
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+                        : elevenLabsCheckStatus.status === 'quota_exceeded'
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold">
+                      {elevenLabsCheckStatus.ok ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      )}
+                      <span>
+                        {elevenLabsCheckStatus.ok
+                          ? 'Chave Ativa e Pronta para Uso!'
+                          : elevenLabsCheckStatus.status === 'quota_exceeded'
+                          ? 'Cota Mensal Gratuita Esgotada (10.000 Caracteres/Mês)'
+                          : 'Atenção na Chave ElevenLabs'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed">
+                      {elevenLabsCheckStatus.message}
+                    </p>
+
+                    {elevenLabsCheckStatus.status === 'quota_exceeded' && (
+                      <div className="pt-2 border-t border-amber-500/20 text-[11px] text-slate-300 space-y-1">
+                        <p className="font-semibold text-cyan-300">Como obter mais 10.000 caracteres grátis em 30 segundos:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-slate-300 text-[10px]">
+                          <li>
+                            Acesse{' '}
+                            <a
+                              href="https://elevenlabs.io"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline text-cyan-400 font-bold"
+                            >
+                              elevenlabs.io
+                            </a>{' '}
+                            e faça Sign Up gratuito (com conta Google, sem cartão).
+                          </li>
+                          <li>
+                            Clique no seu perfil no canto inferior esquerdo ➔ <strong>Profile + API key</strong>.
+                          </li>
+                          <li>
+                            Copie sua nova API Key (começa com <code className="text-cyan-300 font-mono">sk_...</code>) e cole no campo acima.
+                          </li>
+                        </ol>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Sua chave do ElevenLabs está ativa! O assistente utilizará a voz de estúdio com entonação humana e respiração realista. Se seus caracteres mensais se esgotarem, o app reverterá automaticamente para a voz neural do navegador.
+                Sua chave do ElevenLabs é usada para sintetizar voz hiper-realista. Se os créditos mensais se esgotarem ou a chave for inválida, o app recorre automaticamente à voz do navegador para que o assistente nunca fique mudo.
               </p>
             </div>
           ) : (
