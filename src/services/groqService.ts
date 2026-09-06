@@ -236,7 +236,7 @@ Formatos aceitos (JSON estrito):
 
 - Navegar entre abas:
   [ACTION:{"type":"NAVIGATE","tab":"catalog","description":"Navegando para o Catálogo"}]
-  (tab: dashboard, library, catalog, deals, free-games, settings, favorites, playing, completed, backlog)
+  (tab: dashboard, library, catalog, settings, favorites, playing, completed, backlog)
 
 IMPORTANTE:
 Se o usuário apenas fizer perguntas, pedir sugestões, piadas ou dicas sem ordenar uma ação no aplicativo, responda naturalmente SEM adicionar nenhum bloco [ACTION:...].

@@ -7,8 +7,6 @@ import { BottomNav } from './components/layout/BottomNav';
 import { DashboardView } from './views/DashboardView';
 import { LibraryView } from './views/LibraryView';
 import { CatalogView } from './views/CatalogView';
-import { DealsView } from './views/DealsView';
-import { FreeGamesView } from './views/FreeGamesView';
 import { StatusFilteredView } from './views/StatusFilteredView';
 import { SettingsView } from './views/SettingsView';
 import { GameFormModal } from './components/modals/GameFormModal';
@@ -42,10 +40,6 @@ const AppContent: React.FC = () => {
         return <LibraryView />;
       case 'catalog':
         return <CatalogView />;
-      case 'deals':
-        return <DealsView />;
-      case 'free-games':
-        return <FreeGamesView />;
       case 'playing':
         return <StatusFilteredView statusFilter="playing" />;
       case 'completed':
