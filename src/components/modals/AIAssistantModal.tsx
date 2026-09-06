@@ -386,12 +386,13 @@ export const AIAssistantModal: React.FC = () => {
       {
         provider: settings.voiceProvider || 'elevenlabs',
         voiceURI: settings.jarvisVoiceURI,
-        elevenVoiceId: settings.elevenLabsVoiceId || 'JBFqnCBsd6RMkjVDRZzb',
+        elevenVoiceId: settings.customVoiceId?.trim() || settings.elevenLabsVoiceId || activePersonaMeta.voicePreset,
         elevenApiKey: settings.elevenLabsApiKey,
         rate: settings.jarvisVoiceRate,
         pitch: settings.jarvisVoicePitch,
       },
-      () => setTestingVoice(false)
+      () => setTestingVoice(false),
+      currentPersonality
     );
   };
 

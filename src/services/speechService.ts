@@ -18,11 +18,11 @@ export interface ElevenLabsVoiceConfig {
 }
 
 export const ELEVENLABS_VOICES: ElevenLabsVoiceConfig[] = [
-  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (J.A.R.V.I.S. Britânico • Stark ⭐)', desc: 'Tom refinado, elegante e solene de mordomo Stark', gender: 'Masculino' },
-  { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam (Narrador Épico & Profundo)', desc: 'Voz encorpada, grave, excelente para narração / Galvão', gender: 'Masculino' },
-  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Locutor Nobre)', desc: 'Pronúncia articulada, calorosa e sofisticada', gender: 'Masculino' },
-  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger (Cavalheiro / Firme)', desc: 'Voz madura, calma, autoritária e respeitosa', gender: 'Masculino' },
-  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Liam (Jovem Dinâmico / Gamer)', desc: 'Voz ágil, enérgica e descontraída', gender: 'Masculino' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: '🚩 Voz do Lula (Companheiro • Caloroso & Popular)', desc: 'Tom articulado, caloroso e carismático', gender: 'Masculino' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: '🇧🇷 Voz do Bolsonaro (Comandante • Timbre Firme "Talkei")', desc: 'Tom maduro, firme, autoritário e enfático', gender: 'Masculino' },
+  { id: 'pNInz6obpgDQGcFmaJgB', name: '🎙️ Voz do Galvão Bueno (Narrador Épico • Haja Coração)', desc: 'Voz encorpada, grave e cinematográfica', gender: 'Masculino' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: '⚡ Voz do J.A.R.V.I.S. (Stark Britânico • Cinema ⭐)', desc: 'Tom refinado, elegante e solene de mordomo Stark', gender: 'Masculino' },
+  { id: 'TX3LPaxmHKxFdv7VOQHJ', name: '🎮 Voz Gamer Pro (Liam • Jovem & Ágil)', desc: 'Voz ágil, enérgica e descontraída', gender: 'Masculino' },
   { id: 'custom', name: '🎙️ Inserir Voice ID Próprio (Clonada - Lula, Bolsonaro, etc.)', desc: 'Use o código de qualquer voz clonada sua no ElevenLabs', gender: 'Personalizado' },
 ];
 
@@ -352,10 +352,19 @@ export const speechService = {
   },
 
   /**
-   * Teste de voz do J.A.R.V.I.S.
+   * Teste de voz adaptado para a personalidade ativa (J.A.R.V.I.S., Lula, Bolsonaro, Galvão, etc.).
    */
-  async testVoice(options?: SpeechOptions, onEnd?: () => void): Promise<void> {
-    const testText = 'Protocolo de áudio calibrado. Sistemas operacionais em prontidão absoluta para o Senhor Eullon.';
+  async testVoice(options?: SpeechOptions, onEnd?: () => void, personality?: string): Promise<void> {
+    let testText = 'Protocolo de áudio calibrado. Sistemas operacionais em prontidão para o Senhor Eullon.';
+    if (personality === 'lula') {
+      testText = 'Fala, meu companheiro Eullon! Veja bem, o teste de áudio foi aprovado com sucesso pela classe trabalhadora!';
+    } else if (personality === 'bolsonaro') {
+      testText = 'Ô Eullon, talkei? Teste de áudio padrão de excelência concluído com sucesso, sem mimimi!';
+    } else if (personality === 'galvao') {
+      testText = 'Haja coração, Eullon! Transmissão de áudio testada e aprovada! É teste pra cardíaco, amigo!';
+    } else if (personality === 'gamer') {
+      testText = 'Áudio 100% calibrado, Eullon. Sistema pronto para rushar as próximas platinas.';
+    }
     await this.speak(testText, undefined, onEnd, options);
   },
 

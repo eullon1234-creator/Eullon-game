@@ -100,7 +100,8 @@ export const SettingsView: React.FC = () => {
         rate: settings.jarvisVoiceRate,
         pitch: settings.jarvisVoicePitch,
       },
-      () => setTestingVoiceSettings(false)
+      () => setTestingVoiceSettings(false),
+      settings.aiPersonality || 'jarvis'
     );
   };
 
