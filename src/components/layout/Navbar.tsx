@@ -3,6 +3,7 @@ import { Gamepad2, Search, Plus, Dices, Moon, Sun, Cloud, CloudOff, BookOpen, Sp
 import { useGame } from '../../context/GameContext';
 import { ArcReactor } from '../common/ArcReactor';
 import { PERSONALITIES } from '../../data/personalities';
+import { TriforceIcon } from '../../views/ZeldaView';
 
 export const Navbar: React.FC = () => {
   const {
@@ -19,6 +20,7 @@ export const Navbar: React.FC = () => {
   } = useGame();
 
   const isDeathNote = settings.theme === 'death-note';
+  const isZelda = settings.theme === 'zelda';
 
   const handleOpenAdd = () => {
     setEditingGame(null);
@@ -27,6 +29,8 @@ export const Navbar: React.FC = () => {
 
   const cycleTheme = () => {
     if (settings.theme === 'dark') {
+      updateSettings({ theme: 'zelda' });
+    } else if (settings.theme === 'zelda') {
       updateSettings({ theme: 'death-note' });
     } else if (settings.theme === 'death-note') {
       updateSettings({ theme: 'light' });
@@ -39,6 +43,8 @@ export const Navbar: React.FC = () => {
     <header className={`sticky top-0 z-40 w-full border-b backdrop-blur-xl safe-top transition-colors duration-300 ${
       isDeathNote 
         ? 'border-death-crimson/30 bg-death-950/95 shadow-[0_4px_25px_rgba(229,9,20,0.1)]' 
+        : isZelda
+        ? 'border-emerald-500/30 bg-zelda-950/95 shadow-[0_4px_25px_rgba(16,185,129,0.15)]'
         : 'border-slate-800/80 bg-gamer-950/90'
     }`}>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
@@ -52,6 +58,12 @@ export const Navbar: React.FC = () => {
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-death-crimson via-red-900 to-black p-0.5 shadow-glow-crimson group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
               <div className="w-full h-full bg-death-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-death-crimson font-deathnote text-xl sm:text-2xl font-bold select-none">
                 𝕷
+              </div>
+            </div>
+          ) : isZelda ? (
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-400 via-emerald-500 to-teal-800 p-0.5 shadow-glow-triforce group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
+              <div className="w-full h-full bg-zelda-950 rounded-[10px] sm:rounded-[14px] flex items-center justify-center text-amber-400">
+                <TriforceIcon className="w-5 h-5 sm:w-6 sm:h-6 fill-current" />
               </div>
             </div>
           ) : (
@@ -71,20 +83,32 @@ export const Navbar: React.FC = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className={`font-black text-xs sm:text-lg tracking-tight text-white transition-colors truncate ${
-                isDeathNote ? 'font-deathnote text-base sm:text-2xl group-hover:text-death-crimson' : 'group-hover:text-neon-cyan'
+                isDeathNote 
+                  ? 'font-deathnote text-base sm:text-2xl group-hover:text-death-crimson' 
+                  : isZelda 
+                  ? 'text-amber-300 group-hover:text-amber-200' 
+                  : 'group-hover:text-neon-cyan'
               }`}>
-                {isDeathNote ? 'DEATH NOTE' : 'EULLON GAMES'}
+                {isDeathNote ? 'DEATH NOTE' : isZelda ? 'THE LEGEND OF ZELDA' : 'EULLON GAMES'}
               </span>
               <span className={`text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 rounded-md border uppercase tracking-wider hidden xs:inline-flex ${
                 isDeathNote 
                   ? 'bg-death-crimson/20 text-death-crimson border-death-crimson/40 font-deathnote-sub' 
+                  : isZelda
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/40'
                   : 'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/40'
               }`}>
-                {isDeathNote ? 'LOG' : 'PRO'}
+                {isDeathNote ? 'LOG' : isZelda ? 'HYRULE' : 'PRO'}
               </span>
             </div>
-            <p className={`text-[10px] -mt-1 hidden sm:block ${isDeathNote ? 'text-death-smoke font-deathnote-sub italic' : 'text-slate-400'}`}>
-              {isDeathNote ? 'Caderno de Registro de Jogos' : 'Meus Jogos Zerados'}
+            <p className={`text-[10px] -mt-1 hidden sm:block ${
+              isDeathNote 
+                ? 'text-death-smoke font-deathnote-sub italic' 
+                : isZelda
+                ? 'text-emerald-400'
+                : 'text-slate-400'
+            }`}>
+              {isDeathNote ? 'Caderno de Registro de Jogos' : isZelda ? 'Santuário Sagrado de Hyrule' : 'Meus Jogos Zerados'}
             </p>
           </div>
         </div>
@@ -210,6 +234,8 @@ export const Navbar: React.FC = () => {
             className={`p-2 rounded-xl border transition-all ${
               isDeathNote
                 ? 'bg-death-900 border-death-crimson/50 hover:border-death-crimson text-death-crimson shadow-glow-crimson'
+                : isZelda
+                ? 'bg-emerald-950 border-amber-400/50 hover:border-amber-400 text-amber-300 shadow-glow-triforce'
                 : 'bg-gamer-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
             title="Mudar Tema"
@@ -218,6 +244,8 @@ export const Navbar: React.FC = () => {
               <span className="text-sm leading-none select-none block transform hover:scale-110 transition-transform">
                 🍎
               </span>
+            ) : settings.theme === 'zelda' ? (
+              <TriforceIcon className="w-4 h-4 text-amber-400" />
             ) : settings.theme === 'dark' ? (
               <Moon className="w-4 h-4 text-neon-cyan" />
             ) : (
@@ -231,13 +259,15 @@ export const Navbar: React.FC = () => {
             className={`p-2 sm:px-4 sm:py-2 rounded-xl font-bold text-xs sm:text-sm active:scale-95 transition-all flex items-center gap-1.5 flex-shrink-0 ${
               isDeathNote
                 ? 'bg-gradient-to-r from-death-crimson via-red-600 to-red-800 text-white shadow-glow-crimson hover:brightness-110 border border-red-500/30'
+                : isZelda
+                ? 'bg-gradient-to-r from-amber-500 via-emerald-500 to-teal-700 text-slate-950 shadow-glow-triforce hover:brightness-110 border border-amber-400/40'
                 : 'bg-gradient-to-r from-neon-cyan to-blue-600 text-gamer-950 shadow-glow-cyan hover:brightness-110'
             }`}
             title="Adicionar Jogo"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
             <span className="hidden sm:inline">
-              {isDeathNote ? 'Escrever no Caderno' : 'Adicionar Jogo'}
+              {isDeathNote ? 'Escrever no Caderno' : isZelda ? 'Registrar Lenda' : 'Adicionar Jogo'}
             </span>
           </button>
         </div>

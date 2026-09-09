@@ -36,7 +36,7 @@ export interface JarvisAction {
   gameTitle?: string;
   status?: 'playing' | 'completed' | 'backlog' | 'abandoned';
   rating?: number;
-  theme?: 'dark' | 'light' | 'death-note';
+  theme?: 'dark' | 'light' | 'death-note' | 'zelda';
   tab?: NavigationTab;
   platform?: string;
   modal?: 'picker' | 'add' | 'search';
@@ -231,12 +231,12 @@ Formatos aceitos (JSON estrito):
   [ACTION:{"type":"SYNC_CLOUD","description":"Sincronização com a nuvem iniciada"}]
 
 - Alterar tema de interface:
-  [ACTION:{"type":"SET_THEME","theme":"death-note","description":"Tema Death Note ativado"}]
-  (theme: dark, death-note, light)
+  [ACTION:{"type":"SET_THEME","theme":"zelda","description":"Tema The Legend of Zelda ativado"}]
+  (theme: dark, death-note, light, zelda)
 
 - Navegar entre abas:
-  [ACTION:{"type":"NAVIGATE","tab":"catalog","description":"Navegando para o Catálogo"}]
-  (tab: dashboard, library, catalog, settings, favorites, playing, completed, backlog)
+  [ACTION:{"type":"NAVIGATE","tab":"zelda","description":"Navegando para o Santuário de Zelda"}]
+  (tab: dashboard, library, catalog, zelda, settings, favorites, playing, completed, backlog)
 
 IMPORTANTE:
 Se o usuário apenas fizer perguntas, pedir sugestões, piadas ou dicas sem ordenar uma ação no aplicativo, responda naturalmente SEM adicionar nenhum bloco [ACTION:...].

@@ -12,6 +12,7 @@ import { PERSONALITIES } from '../data/personalities';
 import { updateService, CURRENT_APP_VERSION, UpdateInfo } from '../services/updateService';
 import { UpdateModal } from '../components/modals/UpdateModal';
 import { imageCacheService, CacheStats } from '../services/imageCacheService';
+import { TriforceIcon } from './ZeldaView';
 import { 
   exportLibraryToJSON, 
   exportLibraryToCSV, 
@@ -284,7 +285,7 @@ export const SettingsView: React.FC = () => {
             <label className="text-xs font-bold text-slate-300 block">
               Tema Visual
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
               <button
                 type="button"
                 onClick={() => updateSettings({ theme: 'dark' })}
@@ -296,6 +297,22 @@ export const SettingsView: React.FC = () => {
               >
                 <Moon className="w-4 h-4 text-neon-cyan" />
                 <span>Escuro (Gamer)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => updateSettings({ theme: 'zelda' })}
+                className={`py-3 px-4 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all relative overflow-hidden ${
+                  settings.theme === 'zelda'
+                    ? 'bg-gradient-to-r from-amber-500/25 to-emerald-500/25 border-amber-400 text-amber-200 shadow-glow-triforce ring-1 ring-amber-400'
+                    : 'bg-emerald-950/60 border-emerald-900/60 text-slate-300 hover:text-amber-300 hover:border-emerald-500/40'
+                }`}
+              >
+                <TriforceIcon className="w-4 h-4 text-amber-400" />
+                <span className="font-black tracking-wide text-amber-300">Zelda</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-300 uppercase font-mono tracking-tighter">
+                  Hyrule
+                </span>
               </button>
 
               <button
@@ -327,6 +344,12 @@ export const SettingsView: React.FC = () => {
                 <span>Claro</span>
               </button>
             </div>
+            {settings.theme === 'zelda' && (
+              <p className="text-[11px] text-amber-300/90 italic pl-1 animate-fadeIn flex items-center gap-1.5">
+                <TriforceIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>"It's dangerous to go alone! Take this." — Santuário Sagrado de Hyrule Ativado</span>
+              </p>
+            )}
             {settings.theme === 'death-note' && (
               <p className="text-[11px] text-red-400/90 font-deathnote-sub italic pl-1 animate-fadeIn">
                 "O humano que registrar seus jogos neste caderno viverá para finalizá-los." — Regra do Shinigami

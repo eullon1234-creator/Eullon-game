@@ -7,6 +7,7 @@ import { BottomNav } from './components/layout/BottomNav';
 import { DashboardView } from './views/DashboardView';
 import { LibraryView } from './views/LibraryView';
 import { CatalogView } from './views/CatalogView';
+import { ZeldaView } from './views/ZeldaView';
 import { StatusFilteredView } from './views/StatusFilteredView';
 import { SettingsView } from './views/SettingsView';
 import { GameFormModal } from './components/modals/GameFormModal';
@@ -20,6 +21,7 @@ import { updateService, UpdateInfo } from './services/updateService';
 const AppContent: React.FC = () => {
   const { activeTab, settings } = useGame();
   const isDeathNote = settings.theme === 'death-note';
+  const isZelda = settings.theme === 'zelda';
   const [updateInfo, setUpdateInfo] = React.useState<UpdateInfo | null>(null);
   const [showAutoUpdateModal, setShowAutoUpdateModal] = React.useState(false);
 
@@ -40,6 +42,8 @@ const AppContent: React.FC = () => {
         return <LibraryView />;
       case 'catalog':
         return <CatalogView />;
+      case 'zelda':
+        return <ZeldaView />;
       case 'playing':
         return <StatusFilteredView statusFilter="playing" />;
       case 'completed':
@@ -60,7 +64,9 @@ const AppContent: React.FC = () => {
   return (
     <div className={`min-h-screen flex flex-col font-sans gamer-grid-bg transition-colors duration-300 ${
       isDeathNote 
-        ? 'bg-death-950 text-death-parchment selection:bg-death-crimson selection:text-white' 
+        ? 'bg-death-950 text-death-parchment selection:bg-death-crimson selection:text-white death-note' 
+        : isZelda
+        ? 'bg-zelda-950 text-amber-100 selection:bg-emerald-500 selection:text-slate-950 zelda'
         : 'bg-gamer-950 text-slate-100 selection:bg-neon-cyan selection:text-gamer-950'
     }`}>
       <Navbar />

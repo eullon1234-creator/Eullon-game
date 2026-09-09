@@ -6,10 +6,13 @@ import {
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
 import { CURATED_GAMES } from '../../data/curatedGames';
+import { ZELDA_GAMES_DATABASE } from '../../data/zeldaGames';
+import { TriforceIcon } from '../../views/ZeldaView';
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, games, settings } = useGame();
   const isDeathNote = settings.theme === 'death-note';
+  const isZelda = settings.theme === 'zelda';
 
   const playingCount = games.filter((g) => g.status === 'playing').length;
   const completedCount = games.filter((g) => g.status === 'completed').length;
@@ -29,6 +32,13 @@ export const Sidebar: React.FC = () => {
       icon: <Library className="w-4 h-4" />,
       badge: games.length,
       badgeColor: isDeathNote ? 'bg-death-800 text-death-parchment/80 border border-death-crimson/20' : 'bg-gamer-800 text-slate-300',
+    },
+    {
+      id: 'zelda',
+      label: isDeathNote ? 'Santuário de Zelda' : isZelda ? 'Lenda de Zelda' : 'Zelda Saga',
+      icon: <TriforceIcon className="w-4 h-4 text-amber-400" />,
+      badge: ZELDA_GAMES_DATABASE.length,
+      badgeColor: 'bg-amber-500/20 text-amber-300 border border-amber-400/40',
     },
     {
       id: 'catalog',
