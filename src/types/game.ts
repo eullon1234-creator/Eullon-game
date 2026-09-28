@@ -26,6 +26,7 @@ export type NavigationTab =
   | 'library'
   | 'catalog'
   | 'zelda'
+  | 'daysgone'
   | 'playing'
   | 'completed'
   | 'backlog'

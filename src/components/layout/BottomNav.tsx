@@ -6,6 +6,7 @@ import {
 import { useGame } from '../../context/GameContext';
 import { NavigationTab } from '../../types/game';
 import { TriforceIcon } from '../../views/ZeldaView';
+import { MotorcycleIcon } from '../../views/DaysGoneView';
 
 export const BottomNav: React.FC = () => {
   const { activeTab, setActiveTab, games, settings } = useGame();
@@ -24,6 +25,7 @@ export const BottomNav: React.FC = () => {
   ];
 
   const moreTabs = [
+    { id: 'daysgone' as NavigationTab, label: 'Days Gone (Mês)', icon: <MotorcycleIcon className="w-5 h-5 text-orange-400" /> },
     { id: 'zelda' as NavigationTab, label: 'Zelda', icon: <TriforceIcon className="w-5 h-5 text-amber-400" /> },
     { id: 'catalog' as NavigationTab, label: isDeathNote ? 'Grimório' : 'Catálogo', icon: <Sparkles className="w-5 h-5 text-amber-400" /> },
     { id: 'completed' as NavigationTab, label: isDeathNote ? 'Finalizados' : 'Zerados', icon: <CheckCircle2 className="w-5 h-5 text-teal-400" /> },

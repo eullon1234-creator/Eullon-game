@@ -8,6 +8,7 @@ import { NavigationTab } from '../../types/game';
 import { CURATED_GAMES } from '../../data/curatedGames';
 import { ZELDA_GAMES_DATABASE } from '../../data/zeldaGames';
 import { TriforceIcon } from '../../views/ZeldaView';
+import { MotorcycleIcon } from '../../views/DaysGoneView';
 
 export const Sidebar: React.FC = () => {
   const { activeTab, setActiveTab, games, settings } = useGame();
@@ -20,7 +21,7 @@ export const Sidebar: React.FC = () => {
   const abandonedCount = games.filter((g) => g.status === 'abandoned').length;
   const favoritesCount = games.filter((g) => g.favorite).length;
 
-  const navItems: { id: NavigationTab; label: string; icon: React.ReactNode; badge?: number; badgeColor?: string }[] = [
+  const navItems: { id: NavigationTab; label: string; icon: React.ReactNode; badge?: number | string; badgeColor?: string }[] = [
     {
       id: 'dashboard',
       label: isDeathNote ? 'Sumário do Caderno' : 'Dashboard',
@@ -32,6 +33,13 @@ export const Sidebar: React.FC = () => {
       icon: <Library className="w-4 h-4" />,
       badge: games.length,
       badgeColor: isDeathNote ? 'bg-death-800 text-death-parchment/80 border border-death-crimson/20' : 'bg-gamer-800 text-slate-300',
+    },
+    {
+      id: 'daysgone',
+      label: isDeathNote ? 'Evento: Days Gone' : 'Days Gone (Mês)',
+      icon: <MotorcycleIcon className="w-4 h-4 text-orange-400" />,
+      badge: 'Evento 🔥',
+      badgeColor: 'bg-orange-500/20 text-orange-300 border border-orange-400/40 font-bold',
     },
     {
       id: 'zelda',

@@ -8,6 +8,7 @@ import { DashboardView } from './views/DashboardView';
 import { LibraryView } from './views/LibraryView';
 import { CatalogView } from './views/CatalogView';
 import { ZeldaView } from './views/ZeldaView';
+import { DaysGoneView } from './views/DaysGoneView';
 import { StatusFilteredView } from './views/StatusFilteredView';
 import { SettingsView } from './views/SettingsView';
 import { GameFormModal } from './components/modals/GameFormModal';
@@ -44,6 +45,8 @@ const AppContent: React.FC = () => {
         return <CatalogView />;
       case 'zelda':
         return <ZeldaView />;
+      case 'daysgone':
+        return <DaysGoneView />;
       case 'playing':
         return <StatusFilteredView statusFilter="playing" />;
       case 'completed':
